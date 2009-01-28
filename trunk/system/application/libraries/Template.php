@@ -14,6 +14,7 @@
 		var $module = array();
 		var $ci = NULL;
 		var $type = 'html';
+		var $enabled = TRUE;
 		var $allowed = array(
 			'header', 
 			'navigation', 
@@ -21,13 +22,20 @@
 			'sidebar', 
 			'footer'
 		);
-		
 		function Template() 
 		{
 			$this->ci =& get_instance();
 			$this->ci->ui = $this;
 			$this->main_title = $this->ci->config->config['base_title'];
 			$this->ci->template = $this;
+		}
+		function enable()
+		{
+			$this->enabled = TRUE;
+		}
+		function disable()
+		{
+			$this->enabled = FALSE;
 		}
 		function set_output($type = 'html') 
 		{
@@ -95,37 +103,39 @@
 		}
 		function publish() 
 		{
-			if($this->type == 'xhr') :
-				$response = json_encode($this->response);
-				print $response;
-				die();
-			elseif($this->type == 'text') :
-				$response = $this->response;
-				print $response;
-				die();
-			else :
-				$data =  file_get_contents($this->directory.$this->path['STYLE'].$this->theme.$this->filename.'.html', false);
-				
-				$search = array(
-					'{{HEADER}}',
-					'{{NAVIGATION}}',
-					'{{SIDEBAR}}',
-					'{{CONTENT}}',
-					'{{FOOTER}}'
-				);
-				
-				$replace = array(
-					$this->header,
-					$this->navigation,
-					$this->sidebar,
-					$this->content,
-					$this->footer
-				);
-				
-				$data = str_replace($search, $replace, $data);
-				$data = $this->_standard($data);
-				
-				$this->ci->output->set_output($data);
+			if (!!$this->enabled) :
+				if ($this->type == 'xhr') :
+					$response = json_encode($this->response);
+					print $response;
+					die();
+				elseif ($this->type == 'text') :
+					$response = $this->response;
+					print $response;
+					die();
+				else :
+					$data =  file_get_contents($this->directory.$this->path['STYLE'].$this->theme.$this->filename.'.html', false);
+					
+					$search = array(
+						'{{HEADER}}',
+						'{{NAVIGATION}}',
+						'{{SIDEBAR}}',
+						'{{CONTENT}}',
+						'{{FOOTER}}'
+					);
+					
+					$replace = array(
+						$this->header,
+						$this->navigation,
+						$this->sidebar,
+						$this->content,
+						$this->footer
+					);
+					
+					$data = str_replace($search, $replace, $data);
+					$data = $this->_standard($data);
+					
+					$this->ci->output->set_output($data);
+				endif;
 			endif;
 		}
 		function _standard($data) 
