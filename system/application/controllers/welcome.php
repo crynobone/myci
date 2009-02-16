@@ -24,6 +24,14 @@ class Welcome extends Controller {
 			)
 		);
 	}
+	function sloppy()
+	{
+		$data = array ();
+		$this->ui->disable();
+		$this->load->model('Welcome_model', 'model');
+		$this->load->view("sloppy", $data);
+	}
+	
 }
 
 /* End of file welcome.php */
