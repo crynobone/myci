@@ -24,7 +24,6 @@
 		);
 		function Template() 
 		{
-			
 			$this->ci =& get_instance();
 			$this->ci->config->load( 'application', TRUE );
 			$this->ci->ui = $this;
@@ -43,9 +42,10 @@
 		{
 			$allowed = array( 'json', 'text', 'html' );
 			
-			if ( in_array( $type, $allowed ) ) :
+			if ( in_array( $type, $allowed ) ) 
+			{
 				$this->type = $type;
-			endif;
+			}
 		}
 		function set_title( $title = '' )
 		{
@@ -53,55 +53,61 @@
 		}
 		function set_template( $dir = '' ) 
 		{
-			if ( is_dir( $this->directory . $this->path['STYLE'] . $dir ) ) :
+			if ( is_dir( $this->directory . $this->path['STYLE'] . $dir ) ) 
+			{
 				$this->theme = $dir;
-			endif;
+			}
 		}
 		function set_file( $file = '' ) 
 		{
-			if ( is_dir( $this->directory . $this->path['STYLE'] . $this->theme . $file . '.html' ) ) :
+			if ( is_file( $this->directory . $this->path['STYLE'] . $this->theme . $file . '.html' ) ) 
+			{
 				$this->filename = $file . '.html';
-			endif;
+			}
 		}
 		function view( $file, $data = array(), $part = 'content' ) 
 		{
 			$part = ( ( $part == NULL or $part == '' ) ? 'content' : $part );
 			
-			if ( in_array( $part, $this->allowed  ) ) :
+			if ( in_array( $part, $this->allowed  ) ) {
 				$this->$part .= $this->ci->load->view( $file, $data, TRUE );
-			endif;
+			}
 		}
 		function parse( $file, $data = array(), $part = 'content' ) 
 		{
 			$part = ( ( $part == NULL or $part == '' ) ? 'content' : $part );
 			
-			if ( in_array( $part, $this->allowed ) ) :
+			if ( in_array( $part, $this->allowed ) ) 
+			{
 				$this->$part .= $this->ci->parser->parse( $file, $data, TRUE );
-			endif;
+			}
 		}
 		function clear( $part = '' ) 
 		{
 			$part = ( ( $part == NULL or $part == '' ) ? 'content' : $part );
 			
-			if ( in_array( $part, $this->allowed ) ) :
+			if ( in_array( $part, $this->allowed ) ) 
+			{
 				$this->$part = '';
-			endif;
+			}
 		}
 		public function append( $content = '', $part = 'content' ) 
 		{
 			$part = ( ( $part == NULL or $part == '' ) ? 'content' : $part );
 			
-			if ( in_array( $part, $this->allowed ) ) :
+			if ( in_array( $part, $this->allowed ) ) 
+			{
 				$this->$part .= $content;
-			endif;
+			}
 		}
 		function prepend( $content = '', $part = 'content' ) 
 		{
 			$part = ( ( $part == NULL or $part == '') ? 'content' : $part);
 			
-			if ( in_array($part, $this->allowed ) ) :
+			if ( in_array($part, $this->allowed ) ) 
+			{
 				$this->$part = $content . $this->$part;
-			endif;
+			}
 		}
 		function render() 
 		{
@@ -113,16 +119,19 @@
 		}
 		function publish() 
 		{
-			if ( !!$this->enabled ) :
-				if ( $this->type == 'json' ) :
-					$response = json_encode($this->response);
+			if ( !!$this->enabled ) {
+				if ( $this->type == 'json' ) {
+					$response = json_encode( $this->response );
 					print $response;
 					die();
-				elseif ( $this->type == 'text' ) :
+				}
+				elseif ( $this->type == 'text' ) {
 					$response = $this->response;
 					print $response;
 					die();
-				else :
+				}
+				else 
+				{
 					$data =  file_get_contents( $this->directory . $this->path['STYLE'] . $this->theme . $this->filename . '.html', FALSE );
 					
 					$search = array(
@@ -146,16 +155,17 @@
 					
 					// Run it through CI default output, so it can be cache
 					$this->ci->output->set_output( $data );
-				endif;
-			endif;
+				}
+			}
 		}
 		function _standard( $data ) 
 		{
 			$title = $this->site_name;
 				
-			if ( trim( $this->title ) != '') :
+			if ( trim( $this->title ) != '') 
+			{
 				$title = $this->title.' &raquo; ' . $title;
-			endif;
+			}
 			
 			$search = array(
 				'{{PAGE-NAME}}',
@@ -179,12 +189,14 @@
 				$this->ci->config->config['base_url'] . $this->directory . $this->path['SCRIPT'],
 			);
 			
-			if ( count( $this->module ) > 0 ) :
-				foreach ( $this->module as $key => $value ) :
+			if ( count( $this->module ) > 0 ) 
+			{
+				foreach ( $this->module as $key => $value ) 
+				{
 					array_push( $search, '{{MODULE-' . strtoupper( $key ) . '}}' );
 					array_push( $replace, $value );
-				endforeach;
-			endif;
+				}
+			}
 			
 			return @str_replace( $search, $replace, $data );
 		}
