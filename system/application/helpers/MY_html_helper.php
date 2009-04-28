@@ -6,11 +6,11 @@
  * @param object $text
  * @param object $attributes
  */
-if(!function_exists('strong'))
+if(!function_exists('dom'))
 {
-	function strong($text, $attributes)
+	function dom($text = '', $type = 'strong', $attributes)
 	{
-		
+		$type = strtolower( $type );
 		// Were any attributes submitted?  If so generate a string
 		if (is_array($attributes))
 		{
@@ -23,9 +23,9 @@ if(!function_exists('strong'))
 			$attributes = $atts;
 		}
 		
-		$output .= '<strong '.$attributes.'>';
+		$output .= '<' . $type . ' ' . $attributes . '>';
 		$output .= $text;
-		$output .= '</strong>';
+		$output .= '</'. $type .'>';
 	}
 }
 ?>
