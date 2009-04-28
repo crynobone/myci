@@ -28,7 +28,7 @@
 			$this->ci =& get_instance();
 			$this->ci->config->load( 'application', TRUE );
 			$this->ci->ui = $this;
-			$this->main_title = $this->ci->config->item( 'site_name', 'application' );
+			$this->site_name = $this->ci->config->item( 'site_name', 'application' );
 			$this->ci->template = $this;
 		}
 		function enable()
@@ -46,6 +46,10 @@
 			if ( in_array( $type, $allowed ) ) :
 				$this->type = $type;
 			endif;
+		}
+		function set_title( $title = '' )
+		{
+			$this->title = $title;
 		}
 		function set_template( $dir = '' ) 
 		{
