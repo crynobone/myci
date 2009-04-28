@@ -9,9 +9,9 @@
  */
 if ( ! function_exists('elements'))
 {
-	function elements($item, $array, $default = FALSE)
+	function elements( $item, $array, $default = FALSE )
 	{
-		if ( ! isset($array[$item]))
+		if ( ! isset( $array[$item] ) )
 		{
 			return $default;
 		}

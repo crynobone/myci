@@ -18,9 +18,9 @@ if (!function_exists('index_url'))
  * @return 
  * @param object $filters[optional]
  */
-if (!function_exists('segment_url'))
+if (!function_exists('smart_url'))
 {
-    function segment_url($filters = array ())
+    function smart_url( $filters = array () )
     {
         $CI = & get_instance();
         $CI->uri->auto_segment();
@@ -29,11 +29,11 @@ if (!function_exists('segment_url'))
 
         $keys = array ();
 
-        foreach ($CI->uri->auto_segments as $key => $value)
+        foreach ( $CI->uri->auto_segments as $key => $value )
         {
-            if (!is_int($key))
+            if ( !is_int( $key ) )
             {
-                $filter = elements($key, $filters);
+                $filter = elements( $key, $filters );
 
                 if ($filter !== FALSE)
                 {
@@ -51,11 +51,11 @@ if (!function_exists('segment_url'))
             }
         }
 
-        foreach ($filters as $fkey=>$fvalue)
+        foreach ( $filters as $fkey => $fvalue )
         {
-            if (!in_array($fkey, $keys))
+            if ( !in_array( $fkey, $keys ) )
 			{
-				if(!is_int($fkey))
+				if ( !is_int( $fkey ) )
 				{
 					$uri .= $fkey."/".$fvalue."/";
 				}
@@ -69,27 +69,4 @@ if (!function_exists('segment_url'))
         return site_url($uri);
     }
 }
-
-if (!function_exists('smart_anchor'))
-{
-	function smart_anchor($filter = array (), $text = "", $attributes = '')
-	{
-		$site = segment_url($filter);
-		
-		// Were any attributes submitted?  If so generate a string
-		if (is_array($attributes))
-		{
-			$atts = '';
-			foreach ($attributes as $key => $val)
-			{
-				$atts .= ' ' . $key . '="' . $val . '"';
-			}
-						
-			$attributes = $atts;
-		}
-		
-		return '<a href="' . $site . '" ' . $attributes . '>' . $text . '</a>';
-	}
-}
-
 ?>
