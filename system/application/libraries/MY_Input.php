@@ -15,7 +15,7 @@ class MY_Input extends CI_Input
 		$this->_sanitize_globals();
 	}
 	
-	function _hide_get()
+	function _sanitize_get()
 	{
 		$this->input['GET']	= $this->_clean_input_data( $_GET );
 	}

@@ -24,8 +24,9 @@
 		);
 		function Template() 
 		{
-			$this->config->load( 'application', TRUE );
+			
 			$this->ci =& get_instance();
+			$this->ci->config->load( 'application', TRUE );
 			$this->ci->ui = $this;
 			$this->main_title = $this->ci->config->item( 'site_name', 'application' );
 			$this->ci->template = $this;
