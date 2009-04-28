@@ -18,9 +18,9 @@ if (!function_exists('index_url'))
  * @return 
  * @param object $filters[optional]
  */
-if (!function_exists('smart_url'))
+if (!function_exists('assist_url'))
 {
-    function smart_url( $filters = array () )
+    function assist_url( $filters = array () )
     {
         $CI = & get_instance();
         $CI->uri->auto_segment();
@@ -37,12 +37,12 @@ if (!function_exists('smart_url'))
 
                 if ($filter !== FALSE)
                 {
-                    array_push($keys, $key);
-                    $uri .= $key."/".$filter."/";
+                    array_push( $keys, $key );
+                    $uri .= $key . "/" . $filter . "/";
                 }
                 else
                 {
-                    $uri .= $key."/".$value."/";
+                    $uri .= $key . "/" . $value . "/";
                 }
             }
             else
@@ -57,16 +57,16 @@ if (!function_exists('smart_url'))
 			{
 				if ( !is_int( $fkey ) )
 				{
-					$uri .= $fkey."/".$fvalue."/";
+					$uri .= $fkey . "/" . $fvalue . "/";
 				}
 				else {
-					$uri .= $fvalue."/";
+					$uri .= $fvalue . "/";
 				}
                 
 			}
 		}
 
-        return site_url($uri);
+        return site_url( $uri );
     }
 }
 ?>
