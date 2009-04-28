@@ -71,7 +71,7 @@
 			$part = ( ( $part == NULL or $part == '' ) ? 'content' : $part );
 			
 			if ( in_array( $part, $this->allowed ) ) :
-				$this->$part .= $this->ci->parser->parse($file, $data, TRUE);
+				$this->$part .= $this->ci->parser->parse( $file, $data, TRUE );
 			endif;
 		}
 		function clear( $part = '' ) 

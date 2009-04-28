@@ -3,9 +3,9 @@
 class MY_Pagination extends CI_Pagination
 {
     var $suffix_url = "";
-    function MY_Pagination($params = array ())
+    function MY_Pagination( $params = array () )
     {
-        parent::CI_Pagination($params);
+        parent::CI_Pagination( $params );
 
     }
     /**
@@ -16,9 +16,9 @@ class MY_Pagination extends CI_Pagination
      * @param object $page
      */
 
-    function _anchor($page)
+    function _anchor( $page )
     {
-        return $this->base_url.$page.$this->suffix_url;
+        return $this->base_url . $page . $this->suffix_url;
     }
     /**
      * Generate the pagination links
@@ -29,7 +29,7 @@ class MY_Pagination extends CI_Pagination
     function create_links()
     {
         // If our item count or per-page total is zero there is no need to continue.
-        if ($this->total_rows == 0OR$this->per_page == 0)
+        if ($this->total_rows == 0 OR $this->per_page == 0)
         {
             return '';
         }
