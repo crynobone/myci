@@ -30,15 +30,12 @@
 			// $ci is by reference, refers back to global instance
 			$ci->adodb =& ADONewConnection($dsn);
 			
-			
-			
 			if ($debug)
 			{
 				$ci->adodb->debug = true;
 			}
 			
 			$ci->ci_is_loaded[] = 'adodb';
-
 			
 			return $this;
 		}

@@ -2,15 +2,17 @@
 
 class MY_Table extends CI_Table
 {
-	var $no_record = 'Tiada rekod buat masa ini';
-    /**
-	 * Generate the table
-	 *
-	 * @access	public
-	 * @param	mixed
-	 * @return	string
-	 */
-	function generate($table_data = NULL)
+	var $no_record 	= 'No record';
+	var $summary 	= array();
+	
+	function clear()
+	{
+		$this->rows				= array();
+		$this->heading			= array();
+		$this->auto_heading		= TRUE;	
+		$this->summary			= array();
+	}
+	function generate( $table_data = NULL )
 	{
 		// The table data can optionally be passed to this function
 		// either as a database result object or an array
@@ -108,12 +110,62 @@ class MY_Table extends CI_Table
 			$out .= '<td colspan="' . count($this->heading) . '">' . $this->no_record . '</td>';
 			$out .= $this->template['row_end'];
 		}
+		
+		// Is there a table summary to display?
+		if (count($this->summary) > 0)
+		{
+			$out .= $this->template['summary_row_start'];
+			$out .= $this->newline;		
+
+			foreach($this->summary as $summary)
+			{
+				$out .= $this->template['summary_cell_start'];
+				$out .= $summary;
+				$out .= $this->template['summary_cell_end'];
+			}
+
+			$out .= $this->template['summary_row_end'];
+			$out .= $this->newline;				
+		}
 
 		$out .= $this->template['table_close'];
 	
 		return $out;
 	}
+	function set_summary()
+	{
+		$args = func_get_args();
+		$this->summary = ( is_array( $args[0] ) ) ? $args[0] : $args;
+	}
+	
+	function _default_template()
+	{
+		return  array (
+			'table_open' 			=> '<table class="datagrid">',
+
+			'heading_row_start' 	=> '<tr>',
+			'heading_row_end' 		=> '</tr>',
+			'heading_cell_start'	=> '<th>',
+			'heading_cell_end'		=> '</th>',
+
+			'row_start' 			=> '<tr>',
+			'row_end' 				=> '</tr>',
+			'cell_start'			=> '<td>',
+			'cell_end'				=> '</td>',
+
+			'row_alt_start' 		=> '<tr class="alt">',
+			'row_alt_end' 			=> '</tr>',
+			'cell_alt_start'		=> '<td>',
+			'cell_alt_end'			=> '</td>',
+			
+			'summary_row_start' 	=> '<tr class="footer">',
+			'summary_row_end' 		=> '</tr>',
+			'summary_cell_start'	=> '<td>',
+			'summary_cell_end'		=> '</td>',
+
+			'table_close' 			=> '</table>'
+		);	
+	}
 	
 }
-
 ?>
