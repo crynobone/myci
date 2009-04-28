@@ -1,4 +1,4 @@
-<?php
+<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
 class MY_Input extends CI_Input
 {
@@ -20,7 +20,7 @@ class MY_Input extends CI_Input
 		$this->input['GET']	= $this->_clean_input_data( $_GET );
 	}
 	
-	function get($index = '', $xss_clean = FALSE)
+	function get( $index = '', $xss_clean = FALSE )
 	{
 		$get = $this->_fetch_from_array( $_GET, $index, $xss_clean );
 		

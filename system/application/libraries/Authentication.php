@@ -13,15 +13,15 @@ class Authentication
     );
     function Authentication()
     {
-        $this->ci = & get_instance();
+        $this->ci =& get_instance();
         $in = false;
 
-        if ($this->ci->input->cookie('auth'))
+        if ( $this->ci->input->cookie( 'auth' ) )
 		{
-            $cookies = html_entity_decode($this->ci->input->cookie('auth', TRUE));
-            $cookie = explode("|", $cookies);
+            $cookies = html_entity_decode( $this->ci->input->cookie( 'auth', TRUE ) );
+            $cookie = explode( "|", $cookies );
 
-            if ($cookie[2] > 0)
+            if ( $cookie[2] > 0 )
 			{
                 $query = "SELECT * FROM user_table WHERE user_id=? AND user_role=?";
                 // SELECT * FROM uhs_user WHERE user_id=? AND user_role=?
@@ -51,7 +51,7 @@ class Authentication
             }
         }
 
-        if ($in === false)
+        if ( $in === FALSE )
 		{
 			$this->_create();
         }
@@ -65,27 +65,23 @@ class Authentication
         $cookie = array (
 	        'name' => 'auth',
 	        'value' => "0|".md5('guest')."|0",
-	        'expire' => 0,
-	        'domain' => $this->ci->config->config['cookie_domain'],
-	        'path' => $this->ci->config->config['cookie_path']
+	        'expire' => 0
         );
 
-        set_cookie($cookie);
+        set_cookie( $cookie );
     }
-    function register($id = 0, $name = 'guest', $password = '', $role = 0)
+    function register( $id = 0, $name = 'guest', $password = '', $role = 0 )
     {
         $cookie = array (
 	        'name' => 'auth',
-	        'value' => $id."|".md5($name.$password)."|".$role,
-	        'expire' => 0,
-	        'domain' => $this->ci->config->config['cookie_domain'],
-	        'path' => $this->ci->config->config['cookie_path']
+	        'value' => $id . "|" . md5( $name . $password ) . "|" . $role,
+	        'expire' => 0
         );
 
-        set_cookie($cookie);
+        set_cookie( $cookie );
     }
     function remove()
     {
-        delete_cookie('auth');
+        delete_cookie( 'auth' );
     }
 }

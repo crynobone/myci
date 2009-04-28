@@ -1,4 +1,4 @@
-<?php
+<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
 class Option
 {
@@ -21,8 +21,20 @@ class Option
 	
 	function _is_enable() 
 	{
-		if ( $this->config['enable'] === TRUE AND trim( $this->config['table'] ) !== '' AND  trim( $this->config['attribute'] ) !== '' AND trim( $this->config['value'] ) !== '' ) {
-			$this->enabled = TRUE;
+		$test = array ( 'table', 'attribute', 'value ');
+		$invalid = FALSE;
+		
+		if ( $this->config['enable'] === TRUE )
+		{
+			foreach ( $test as $value )
+			{
+				if ( trim( $this->config[ $value ] ) === '' ) 
+				{
+					$invalid = TRUE;	
+				}
+			}
+			
+			$this->enabled = ( $invalid === FALSE ? TRUE : FALSE );
 		}
 		else {
 			$this->enabled = FALSE;
@@ -31,13 +43,15 @@ class Option
 	
 	function _cache_all()
 	{
-		if ( $this->enabled === TRUE ) {
+		if ( $this->enabled === TRUE ) 
+		{
 			$query = "SELECT $this->config['attribute'], $this->config['value'] 
 			FROM $this->config['table']";
 			
-			$this->ci->adodb->execute( $query );
+			$result = $this->ci->adodb->execute( $query );
 			
-			while ( $row = $result->fetchRow() ) {
+			while ( $row = $result->fetchRow() ) 
+			{
 				$this->data[ $row[ $this->config[ 'attribute' ] ] ] = $row[ $this->config[ 'value' ] ];	
 			}
 		}
@@ -45,21 +59,25 @@ class Option
 	}
 	function get( $name = '' )
 	{
-		if ( !isset( $this->data[ $name ] ) ) {
+		if ( !isset( $this->data[ $name ] ) ) 
+		{
 			return FALSE;
 		}
-		else {
+		else 
+		{
 			return $this->data[ $name ];
 		}
 	}
 	function update( $name = '', $value = '' )
 	{
-		if ( $this->enabled === TRUE AND trim( $name ) !== '' ) {
-			
-			if ( !isset( $this->data[ $name ] ) ) {
+		if ( $this->enabled === TRUE AND trim( $name ) !== '' ) 
+		{
+			if ( !isset( $this->data[ $name ] ) ) 
+			{
 				$query = "INSERT INTO $this->config['table'] ($this->config['value'], $this->config['attribute']) VALUES (?, ?)";
 			}
-			else {
+			else 
+			{
 				$query = "UPDATE $this->config['table'] SET , $this->config['value']=? WHERE $this->config['attribute']=?";
 			}
 			

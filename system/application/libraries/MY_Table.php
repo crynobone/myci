@@ -12,6 +12,7 @@ class MY_Table extends CI_Table
 		$this->auto_heading		= TRUE;	
 		$this->summary			= array();
 	}
+	
 	function generate( $table_data = NULL )
 	{
 		// The table data can optionally be passed to this function
