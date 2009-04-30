@@ -88,7 +88,7 @@ class Option
 	{
 		if ( $this->enabled === TRUE AND trim( $name ) !== '' ) {
 			
-			$query = "DELETE FROM $this->config['table'] WHERE $this->config['attribute']=?";
+			$query = "DELETE FROM " . $this->config['table'] . " WHERE " . $this->config['attribute'] . "=?";
 			
 			$result = $this->ci->db->query( $query, array( $name ) );
 			
