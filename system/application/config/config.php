@@ -15,18 +15,6 @@ $config['base_url']	= "http://localhost/ci/";
 
 /*
 |--------------------------------------------------------------------------
-| Base Site TITLE
-|--------------------------------------------------------------------------
-|
-| TITLE to your CodeIgniter root. Typically this will be your base TITLE,
-|
-|	CodeIgniter Application
-|
-*/
-$config['base_title'] = 'CodeIgniter Application';
-
-/*
-|--------------------------------------------------------------------------
 | Index File
 |--------------------------------------------------------------------------
 |

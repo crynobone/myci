@@ -11,8 +11,8 @@ class Option
 	{
 		$this->ci =& get_instance();
 		$this->ci->option = $this;
-		$this->ci->config->load( 'application', TRUE );
 		
+		$this->ci->config->load( 'application', TRUE );
 		$this->config = $this->ci->config->item( 'option', 'application' );
 		
 		$this->_is_enable();
@@ -21,7 +21,7 @@ class Option
 	
 	function _is_enable() 
 	{
-		$test = array ( 'table', 'attribute', 'value ');
+		$test = array ( 'table', 'attribute', 'value' );
 		$invalid = FALSE;
 		
 		if ( $this->config['enable'] === TRUE )
@@ -45,12 +45,10 @@ class Option
 	{
 		if ( $this->enabled === TRUE ) 
 		{
-			$query = "SELECT $this->config['attribute'], $this->config['value'] 
-			FROM $this->config['table']";
+			$query = "SELECT ".$this->config['attribute'].", ".$this->config['value']." FROM ".$this->config['table'];
+			$result = $this->ci->db->query( $query );
 			
-			$result = $this->ci->adodb->execute( $query );
-			
-			while ( $row = $result->fetchRow() ) 
+			foreach ( $result->result_array() as $row ) 
 			{
 				$this->data[ $row[ $this->config[ 'attribute' ] ] ] = $row[ $this->config[ 'value' ] ];	
 			}
@@ -81,7 +79,7 @@ class Option
 				$query = "UPDATE $this->config['table'] SET , $this->config['value']=? WHERE $this->config['attribute']=?";
 			}
 			
-			$result = $this->db->execute( $query, array( $value, $name ) );
+			$result = $this->ci->db->query( $query, array( $value, $name ) );
 			
 			$this->data[ $name ] = $value;
 		}
@@ -92,7 +90,7 @@ class Option
 			
 			$query = "DELETE FROM $this->config['table'] WHERE $this->config['attribute']=?";
 			
-			$result = $this->db->execute( $query, array( $name ) );
+			$result = $this->ci->db->query( $query, array( $name ) );
 			
 			$this->data[ $name ] = FALSE;
 		}

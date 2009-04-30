@@ -2,8 +2,10 @@
 
 class Authentication
 {
-    var $ci = NULL;
-    var $member = array (
+    var $ci 		= NULL;
+	var $test 		= array ( 'id', 'name', 'pass', 'role', 'status' );
+	var $optional 	= array ( 'status', 'fullname', 'email' );
+    var $member 	= array (
 	    'id' => 0,
 	    'name' => 'guest',
 	    'fullname' => '',
@@ -11,47 +13,66 @@ class Authentication
 	    'role' => 0,
 	    'status' => 0
     );
+	var $config 	= array();
+	
     function Authentication()
     {
         $this->ci =& get_instance();
-        $in = false;
-
-        if ( $this->ci->input->cookie( 'auth' ) )
+        
+		$this->ci->config->load( 'application', TRUE );
+		$this->config = $this->ci->config->item( 'auth', 'application' );
+		
+		$this->_generate();	
+	}
+	function _generate()
+	{
+		$has_session = FALSE;
+		
+        if ( $this->ci->input->cookie( 'auth' ) AND $this->config['enable'] === TRUE )
 		{
             $cookies = html_entity_decode( $this->ci->input->cookie( 'auth', TRUE ) );
             $cookie = explode( "|", $cookies );
 
             if ( $cookie[2] > 0 )
 			{
-                $query = "SELECT * FROM user_table WHERE user_id=? AND user_role=?";
-                // SELECT * FROM uhs_user WHERE user_id=? AND user_role=?
-                /*
-                 $row = $this->ci->adodb->getRow($query, array(
-                 $cookie[0],
-                 $cookie[2]
-                 ));
-                 
-                 if(!!$row) :
-                 if($cookie[1] == md5($row['user_name'].$row['user_pass'])) :
-                 /*
-                 * Sample template for user data;
-                 *
-                 * $this->member['id'] = $row['user_id'];
-                 * $this->member['name'] = $row['user_name'];
-                 * $this->member['fullname'] = $row['user_fullname'];
-                 * $this->member['email'] = $row['user_email'];
-                 * $this->member['role'] = $row['user_role'];
-                 * $this->member['status'] = $row['user_status'];
-                 
-                 
-                 $in = true;
-                 endif;
-                 endif;
-                 */
+				$query = $this->_generate_query();
+               	$result = $this->ci->db->query( $query, array( (int)$cookie[0], (int)$cookie[2] ) );
+				
+				if ( $result->num_rows() > 0 ) 
+				{
+					$row = $result->row_array();
+					
+					$secret = $row[ $this->config['column']['name'] ] . $row[ $this->config['column']['pass'] ];
+					
+					if ( $cookie[1] == md5( $secret ) )
+					{
+						foreach ( $this->test as $value )
+						{
+							if ( trim( $row[$this->config['column'][$value]] ) !== '' ) 
+							{
+								$this->member[$value] = $row[$this->config['column'][$value]];
+							}
+						}
+						
+						foreach ( $this->optional as $value )
+						{
+							if ( trim( $row[$this->config['column'][$value]] ) !== '' ) 
+							{
+								$this->member[$value] = $row[$this->config['column'][$value]];
+							}
+						}
+						
+						$has_session = TRUE;
+					}
+				}
+				else 
+				{
+					log_message( 'debug', 'No user authentication found' );
+				}
             }
         }
 
-        if ( $in === FALSE )
+        if ( $has_session === FALSE )
 		{
 			$this->_create();
         }
@@ -59,13 +80,54 @@ class Authentication
         $this->ci->auth = $this->member;
         $this->ci->authentication = $this;
     }
+	function _generate_query()
+	{
+		
+		$invalid = FALSE;
+		$query = "";
+		$select = "";
+		$join = "";
+		
+		foreach ( $this->test as $value )
+		{
+			if ( trim( $this->config['column'][ $value ] ) === '' ) 
+			{
+				$invalid = TRUE;
+			}
+			else 
+			{
+				$select .= ( trim( $select ) !== '' ? ', ' : '' ) . " " . $this->config['column'][$value] . " ";	
+			}
+		}
+		
+		foreach ( $this->optional as $value )
+		{
+			if ( trim( $this->config['column'][ $value ] ) !== '' ) 
+			{
+				$select .= ( trim( $select ) !== '' ? ', ' : '' ) . " " . $this->config['column'][$value] . " ";
+			}
+		}
+		
+		if ( $invalid === FALSE ) 
+		{
+			if ( trim( $this->config['table_meta'] ) !== '' AND trim( $this->config['column']['key'] ) !== '' )
+			{
+				$join = " LEFT JOIN " . $this->config['table_meta'];
+				$join .= " ON " . $this->config['column']['key'];
+				$join .= "=" . $this->config['column']['id'] . " ";
+			}
+			
+			$query = "SELECT * FROM ".$this->config['table']." $join WHERE ".$this->config['column']['id']."=? AND ".$this->config['column']['role']."=? LIMIT 1";
+		}
+		
+		return $query;
+	}
     function _create()
     {
-
         $cookie = array (
 	        'name' => 'auth',
 	        'value' => "0|".md5('guest')."|0",
-	        'expire' => 0
+	        'expire' => $this->_cookie_timeout()
         );
 
         set_cookie( $cookie );
@@ -75,7 +137,7 @@ class Authentication
         $cookie = array (
 	        'name' => 'auth',
 	        'value' => $id . "|" . md5( $name . $password ) . "|" . $role,
-	        'expire' => 0
+	        'expire' => $this->_cookie_timeout()
         );
 
         set_cookie( $cookie );
@@ -84,4 +146,15 @@ class Authentication
     {
         delete_cookie( 'auth' );
     }
+	function _cookie_timeout()
+	{
+		if ( $this->config['expire'] > 0 )
+		{
+			return (int)$this->config['expire'] + time();
+		}
+		else 
+		{
+			return 0;
+		}
+	}
 }
