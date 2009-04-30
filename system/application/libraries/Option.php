@@ -45,7 +45,7 @@ class Option
 	{
 		if ( $this->enabled === TRUE ) 
 		{
-			$query = "SELECT ".$this->config['attribute'].", ".$this->config['value']." FROM ".$this->config['table'];
+			$query = "SELECT " . $this->config['attribute'] . ", " . $this->config['value'] . " FROM " . $this->config['table'];
 			$result = $this->ci->db->query( $query );
 			
 			foreach ( $result->result_array() as $row ) 
@@ -72,11 +72,11 @@ class Option
 		{
 			if ( !isset( $this->data[ $name ] ) ) 
 			{
-				$query = "INSERT INTO $this->config['table'] ($this->config['value'], $this->config['attribute']) VALUES (?, ?)";
+				$query = "INSERT INTO " . $this->config['table'] . " (" . $this->config['value'] . ", " . $this->config['attribute'] . ") VALUES (?, ?)";
 			}
 			else 
 			{
-				$query = "UPDATE $this->config['table'] SET , $this->config['value']=? WHERE $this->config['attribute']=?";
+				$query = "UPDATE " . $this->config['table'] . " SET " . $this->config['value'] ."=? WHERE " . $this->config['attribute'] . "=?";
 			}
 			
 			$result = $this->ci->db->query( $query, array( $value, $name ) );
