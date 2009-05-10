@@ -28,6 +28,11 @@
 			$this->ci->config->load( 'application', TRUE );
 			$this->ci->ui = $this;
 			$this->site_name = $this->ci->config->item( 'site_name', 'application' );
+			$config = $this->ci->config->item( 'template', 'application' );
+			
+			$this->theme = $config['theme'] . '/';
+			$this->filename = $config['filename'];
+			
 			$this->ci->template = $this;
 		}
 		function enable()

@@ -14,6 +14,18 @@ $config['site_name'] = 'My CodeIgniter';
 
 /*
 |--------------------------------------------------------------------------
+| Template Option
+|--------------------------------------------------------------------------
+|
+| Enable you to configure template option
+| Default template: <your-site>/public/styles/<theme>/<filename>.html
+*/
+
+$config['template']['theme'] = 'default';
+$config['template']['filename'] = 'index';
+
+/*
+|--------------------------------------------------------------------------
 | Option Table Schema
 |--------------------------------------------------------------------------
 |
@@ -45,4 +57,6 @@ $config['auth']['column']['fullname'] = '';				// Column: user fullname (VARCHAR
 $config['auth']['column']['role'] = '';					// Column: user role (INT)
 $config['auth']['column']['status'] = '';				// Column: user status (INT)
 $config['auth']['expire'] = 0;
+
+
 
