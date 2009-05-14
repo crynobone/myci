@@ -23,9 +23,11 @@ if(!function_exists('dom'))
 			$attributes = $atts;
 		}
 		
-		$output .= '<' . $type . ' ' . $attributes . '>';
+		$output = '<' . $type . ' ' . $attributes . '>';
 		$output .= $text;
 		$output .= '</'. $type .'>';
+		
+		return $output;
 	}
 }
 ?>
