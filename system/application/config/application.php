@@ -58,5 +58,13 @@ $config['auth']['column']['role'] = '';					// Column: user role (INT)
 $config['auth']['column']['status'] = '';				// Column: user status (INT)
 $config['auth']['expire'] = 0;
 
-
-
+/*
+|--------------------------------------------------------------------------
+| Default QueryString URI Segmentation
+|--------------------------------------------------------------------------
+|
+| Enable you to assign a key for $_GET to parse URI Segmentation
+| e.g: http://your-domain.com/?p=/controller/module
+|
+*/
+$config['application']['get'] = 'p';
