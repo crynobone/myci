@@ -14,7 +14,9 @@ class MY_URI extends CI_URI
 	function MY_URI() 
 	{
 		parent::CI_URI();
-		$this->uri_node = $this->ci->config->item( 'node_segment', 'application' );
+		
+		$this->config->load( 'application', TRUE );
+		$this->uri_node = $this->config->item( 'node_segment', 'application' );
 	}
 	/**
 	 * Get the URI String
