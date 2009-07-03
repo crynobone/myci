@@ -67,4 +67,4 @@ $config['auth']['expire'] = 0;
 | e.g: http://your-domain.com/?p=/controller/module
 |
 */
-$config['application']['get'] = 'p';
+$config['node_segment'] = 'p';
