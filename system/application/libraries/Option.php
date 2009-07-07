@@ -45,10 +45,11 @@ class Option
 	{
 		if ( $this->enabled === TRUE ) 
 		{
-			$query = "SELECT " . $this->config['attribute'] . ", " . $this->config['value'] . " FROM " . $this->config['table'];
-			$result = $this->ci->db->query( $query );
+			$this->ci->db->select( $this->config['attribute'] . ", " . $this->config['value'], FALSE );
+			$this->ci->db->from( $this->config['table'] );
+			$query = $this->ci->db->get();
 			
-			foreach ( $result->result_array() as $row ) 
+			foreach ( $query->result_array() as $row ) 
 			{
 				$this->data[ $row[ $this->config[ 'attribute' ] ] ] = $row[ $this->config[ 'value' ] ];	
 			}
