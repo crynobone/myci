@@ -45,7 +45,8 @@ class Option
 	{
 		if ( $this->enabled === TRUE ) 
 		{
-			$this->ci->db->select( $this->config['attribute'] . ", " . $this->config['value'], FALSE );
+			$this->ci->db->select( $this->config['attribute'] );
+			$this->ci->db->select( $this->config['value'] );
 			$this->ci->db->from( $this->config['table'] );
 			$query = $this->ci->db->get();
 			
@@ -69,18 +70,24 @@ class Option
 	}
 	function update( $name = '', $value = '' )
 	{
+		$data = array();
+		
 		if ( $this->enabled === TRUE AND trim( $name ) !== '' ) 
 		{
+			$data[$this->config['value']] = $value;
+			
+			
 			if ( !isset( $this->data[ $name ] ) ) 
 			{
-				$query = "INSERT INTO " . $this->config['table'] . " (" . $this->config['value'] . ", " . $this->config['attribute'] . ") VALUES (?, ?)";
+				$data[$this->config['attribute']] = $name;
+				
+				$this->ci->db->insert( $this->config['table'], $data );
 			}
 			else 
 			{
-				$query = "UPDATE " . $this->config['table'] . " SET " . $this->config['value'] ."=? WHERE " . $this->config['attribute'] . "=?";
+				$this->ci->db->where( $this->config['attribute'], $name );
+				$this->ci->db->update( $this->config['table'], $data );
 			}
-			
-			$result = $this->ci->db->query( $query, array( $value, $name ) );
 			
 			$this->data[ $name ] = $value;
 		}
@@ -88,10 +95,8 @@ class Option
 	function delete( $name = '' )
 	{
 		if ( $this->enabled === TRUE AND trim( $name ) !== '' ) {
-			
-			$query = "DELETE FROM " . $this->config['table'] . " WHERE " . $this->config['attribute'] . "=?";
-			
-			$result = $this->ci->db->query( $query, array( $name ) );
+			$this->ci->db->where( $this->config['attribute'], $name );
+			$this->ci->db->delete( $this->config['table'] );
 			
 			$this->data[ $name ] = FALSE;
 		}
