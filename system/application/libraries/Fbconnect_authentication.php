@@ -42,12 +42,11 @@ class Fbconnect_authentication
 			
             if ( $cookie[2] > 0 )
 			{
-				$query = $this->_generate_query();
-               	$result = $this->ci->db->query( $query, array( (int)$cookie[0], (int)$cookie[2] ) );
+				$query = $this->_generate_query( $cookie );
 				
-				if ( $result->num_rows() > 0 ) 
+				if ( $query->num_rows() > 0 ) 
 				{
-					$row = $result->row_array();
+					$row = $query->row_array();
 					
 					$secret = $row[ $this->config['column']['name'] ] . $row[ $this->config['column']['pass'] ];
 					
@@ -103,7 +102,7 @@ class Fbconnect_authentication
 			}
 			else 
 			{
-				$select .= ( trim( $select ) !== '' ? ', ' : '' ) . " " . $this->config['column'][$value] . " ";	
+				$this->ci->db->select( $this->config['column'][$value] );	
 			}
 		}
 		
@@ -111,7 +110,7 @@ class Fbconnect_authentication
 		{
 			if ( trim( $this->config['column'][ $value ] ) !== '' ) 
 			{
-				$select .= ( trim( $select ) !== '' ? ', ' : '' ) . " " . $this->config['column'][$value] . " ";
+				$this->ci->db->select( $this->config['column'][$value] );
 			}
 		}
 		
@@ -119,15 +118,18 @@ class Fbconnect_authentication
 		{
 			if ( trim( $this->config['table_meta'] ) !== '' AND trim( $this->config['column']['key'] ) !== '' )
 			{
-				$join = " LEFT JOIN " . $this->config['table_meta'];
-				$join .= " ON " . $this->config['column']['key'];
-				$join .= "=" . $this->config['column']['id'] . " ";
+				$this->ci->db->join( $this->config['table_meta'], $this->config['column']['key'] . '=' . $this->config['column']['id'], 'left' );
 			}
+			$this->ci->db->where( $this->config['column']['id'], $cookie[0] );
+			$this->ci->db->where( $this->config['column']['role'], $cookie[2] );
+			$this->ci->db->limit(1);
+			$this->ci->db->from( $this->config['table'] );
 			
-			$query = "SELECT * FROM ".$this->config['table']." $join WHERE ".$this->config['column']['id']."=? AND ".$this->config['column']['role']."=? LIMIT 1";
+			return $this->ci->db->get();
 		}
-		
-		return $query;
+		else {
+			return NULL;
+		}
 	}
     function _create()
     {
