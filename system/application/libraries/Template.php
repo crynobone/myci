@@ -1,8 +1,8 @@
 <?php if (!defined('BASEPATH')) exit('No direct script access allowed');
 	
 	class Template {
-		var $theme = 'default/';
-		var $directory = 'public/';
+		var $theme = '';
+		var $directory = '';
 		var $path = array(
 			'STYLE' => 'styles/',
 			'SCRIPT' => 'scripts/'
