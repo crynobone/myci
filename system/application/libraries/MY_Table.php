@@ -13,7 +13,7 @@ class MY_Table extends CI_Table
 		$this->summary			= array();
 	}
 	
-	function generate( $table_data = NULL )
+	function generate($table_data = NULL)
 	{
 		// The table data can optionally be passed to this function
 		// either as a database result object or an array
@@ -136,7 +136,7 @@ class MY_Table extends CI_Table
 	function set_summary()
 	{
 		$args = func_get_args();
-		$this->summary = ( is_array( $args[0] ) ) ? $args[0] : $args;
+		$this->summary = (is_array($args[0])) ? $args[0] : $args;
 	}
 	
 	function _default_template()

@@ -1,4 +1,4 @@
-<?php  if (!defined('BASEPATH')) exit('No direct script access allowed'); 
+<?php if (!defined('BASEPATH')) exit('No direct script access allowed'); 
 /**
  * Flexigrid CodeIgniter implementation
  *
@@ -12,7 +12,7 @@
  * Dual licensed under the MIT (MIT-LICENSE.txt)
  * and GPL (GPL-LICENSE.txt) licenses.
 */
-if (! function_exists('build_grid_js'))
+if (!function_exists('build_grid_js'))
 {
 	/**
 	 * Build Javascript to display grid
@@ -35,17 +35,19 @@ if (! function_exists('build_grid_js'))
 	 * @param	array with aditional parameters
 	 * @return	string
 	 */
-	function build_grid_js($grid_id,$url,$colModel,$sortname,$sortorder,$gridParams = NULL,$buttons = NULL, $data = FALSE)
+	function build_grid_js ($grid_id, $url, $colModel, $sortname, $sortorder, $gridParams = NULL, $buttons = NULL, $data = FALSE)
 	{
 		//Basic propreties
 		$grid_js = '<script type="text/javascript">jQuery(function($){';
 		$grid_js .= '$("#'.$grid_id.'").flexigrid({';
 		$grid_js .= "url: '".$url."',";
 		$grid_js .= "dataType: 'json',";
+		
 		if (!!$data)
 		{
 			$grid_js .= "data: ".$data.",";
 		}
+		
 		$grid_js .= "sortname: '".$sortname."',";
 		$grid_js .= "sortorder: '".$sortorder."',";
 		$grid_js .= "usepager: true,";
@@ -55,7 +57,7 @@ if (! function_exists('build_grid_js'))
 		if (is_array($gridParams))
 		{
 			//String exceptions that dont have ' '. Must be lower case.
-			$string_exceptions = array("rpoptions");
+			$string_exceptions = array("rpoptions", "onsuccess");
 			
 			//Print propreties
 			foreach ($gridParams as $index => $value) {
@@ -66,15 +68,26 @@ if (! function_exists('build_grid_js'))
 				else 
 				{
 					if (is_bool($value))
+					{
 						if ($value == true)
+						{
 							$grid_js .= $index.": true,";
+						}
 						else
+						{
 							$grid_js .= $index.": false,";
-					else
-						if (in_array(strtolower($index),$string_exceptions))
+						}
+					else 
+					{
+						if (in_array(strtolower($index),strtolower($string_exceptions)))
+						{
 							$grid_js .= $index.": ".$value.",";
+						}
 						else
+						{
 							$grid_js .= $index.": '".$value."',";
+						}
+					}
 				}
 			}
 		}
@@ -82,7 +95,8 @@ if (! function_exists('build_grid_js'))
 		$grid_js .= "colModel : [";
 		
 		//Get colModel
-		foreach ($colModel as $index => $value) {
+		foreach ($colModel as $index => $value) 
+		{
 			$grid_js .= "{display: '".$value[0]."', ".($value[2] ? "name : '".$index."', sortable: true," : "")." width : ".$value[1].", align: '".$value[3]."'".(isset($value[5]) && $value[5] ? ", hide : true" : "")."},";  
 			
 			//If item is searchable
@@ -90,12 +104,18 @@ if (! function_exists('build_grid_js'))
 			{
 				//Start searchitems var
 				if (!isset($searchitems))
+				{
 					$searchitems = "searchitems : [";
-					
+				}
+				
 				if ($value[4] == 2)
+				{
 					$searchitems .= "{display: '".$value[0]."', name : '".$index."', isdefault: true},";
+				}
 				else if ($value[4] == 1)
+				{
 					$searchitems .= "{display: '".$value[0]."', name : '".$index."'},";
+				}
 			}
 				
 		}
@@ -110,11 +130,16 @@ if (! function_exists('build_grid_js'))
 		if (is_array($buttons)) 
 		{
 			$grid_js .= ",buttons : [";
-			foreach ($buttons as $index => $value) {
+			foreach ($buttons as $index => $value) 
+			{
 				if ($value[0] == 'separator')
+				{
 					$grid_js .= "{separator: true},";
+				}
 				else
+				{
 					$grid_js .= "{name: '".$value[0]."', bclass : '".$value[1]."', onpress : ".$value[2]."},";
+				}
 			}
 			//Remove the last ","
 			$grid_js = substr($grid_js,0,-1).']';
@@ -126,5 +151,3 @@ if (! function_exists('build_grid_js'))
 		return $grid_js;
 	}
 }
-
-?>
