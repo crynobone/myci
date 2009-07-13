@@ -51,7 +51,7 @@ $autoload['libraries'] = array('database', 'template', 'authentication', 'parser
 |	$autoload['helper'] = array('url', 'file');
 */
 
-$autoload['helper'] = array('array', 'url', 'cookie', 'html');
+$autoload['helper'] = array('array', 'url', 'cookie', 'html', 'project');
 
 
 /*
@@ -79,7 +79,7 @@ $autoload['plugin'] = array();
 |
 */
 
-$autoload['config'] = array();
+$autoload['config'] = array('application');
 
 
 /*

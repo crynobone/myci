@@ -22,7 +22,7 @@ $config['site_name'] = 'My CodeIgniter';
 */
 
 $config['template']['theme'] = 'default';
-$config['template']['filename'] = 'index';
+$config['template']['filename'] = 'index.html';
 
 /*
 |--------------------------------------------------------------------------
@@ -64,6 +64,7 @@ $config['option']['value'] = '';
 |	['column']['status']	'user_status' column (INTEGER)
 */
 $config['auth']['enable'] = FALSE;
+$config['auth']['cookie'] = 'auth';
 $config['auth']['table'] = '';
 $config['auth']['table_meta'] = '';
 $config['auth']['column']['id'] = '';
@@ -75,6 +76,7 @@ $config['auth']['column']['fullname'] = '';
 $config['auth']['column']['role'] = '';
 $config['auth']['column']['status'] = '';
 $config['auth']['expire'] = 0;
+
 
 /*
 |--------------------------------------------------------------------------

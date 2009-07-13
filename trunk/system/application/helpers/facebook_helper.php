@@ -1,6 +1,6 @@
 <?php
 
-if ( !function_exists( 'fb_inits' ) )
+if (!function_exists('fb_inits'))
 {
 	function fb_inits()
 	{
@@ -39,4 +39,3 @@ if ( !function_exists( 'fb_user_login' ) )
 		return $output;
 	}	
 }
-?>

@@ -8,9 +8,10 @@
  */
 if(!function_exists('dom'))
 {
-	function dom( $text = '', $type = 'strong', $attributes = '' )
+	function dom($text = '', $type = 'strong', $attributes = '')
 	{
 		$type = strtolower( $type );
+		
 		// Were any attributes submitted?  If so generate a string
 		if (is_array($attributes))
 		{

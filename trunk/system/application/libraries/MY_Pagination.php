@@ -3,10 +3,9 @@
 class MY_Pagination extends CI_Pagination
 {
     var $suffix_url = "";
-    function MY_Pagination( $params = array () )
+    function MY_Pagination($params = array ())
     {
-        parent::CI_Pagination( $params );
-
+        parent::CI_Pagination($params);
     }
     /**
      * Generate full URL
@@ -16,7 +15,7 @@ class MY_Pagination extends CI_Pagination
      * @param object $page
      */
 
-    function _anchor( $page )
+    function _anchor($page)
     {
         return $this->base_url . $page . $this->suffix_url;
     }
@@ -166,4 +165,3 @@ class MY_Pagination extends CI_Pagination
 		return $output;
 	}
 }
-?>

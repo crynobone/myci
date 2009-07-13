@@ -15,8 +15,8 @@ class MY_URI extends CI_URI
 	{
 		parent::CI_URI();
 		
-		$this->config->load( 'application', TRUE );
-		$this->uri_node = $this->config->item( 'node_segment', 'application' );
+		$this->config->load('application', TRUE);
+		$this->uri_node = $this->config->item('node_segment', 'application');
 	}
 	/**
 	 * Get the URI String
@@ -41,7 +41,8 @@ class MY_URI extends CI_URI
 			// Is there a PATH_INFO variable?
 			// Note: some servers seem to have trouble with getenv() so we'll test it two ways
 			$path = (isset($_SERVER['PATH_INFO'])) ? $_SERVER['PATH_INFO'] : @getenv('PATH_INFO');
-			if (trim($path, '/') != '' && $path != "/".SELF)
+			
+			if (trim($path, '/') != '' && $path != "/" . SELF)
 			{
 				$this->uri_string = $path;
 				return;
@@ -49,6 +50,7 @@ class MY_URI extends CI_URI
 
 			// No PATH_INFO?... What about QUERY_STRING?
 			$path =  (isset($_SERVER['QUERY_STRING'])) ? $_SERVER['QUERY_STRING'] : @getenv('QUERY_STRING');
+			
 			if (trim($path, '/') != '')
 			{
 				$this->uri_string = $path;
@@ -101,7 +103,7 @@ class MY_URI extends CI_URI
         $data = array ();
         $not = array ();
 
-        foreach ($this->segments as $key=>$value)
+        foreach ($this->segments as $key => $value)
         {
             $is = elements(trim($value), $this->filters, FALSE);
 
@@ -117,10 +119,9 @@ class MY_URI extends CI_URI
                     $data[$value] = $this->filters[$value];
                 }
             }
-            elseif (!in_array($key, $not))
+            elseif ( ! in_array($key, $not))
             {
                 $data[$key] = $value;
-
             }
         }
 
@@ -128,7 +129,7 @@ class MY_URI extends CI_URI
     }
     function smart($key = 'id')
     {
-        return ( isset ($this->auto_segments[$key]) ? $this->auto_segments[$key] : $this->filters[$key]);
+        return (isset ($this->auto_segments[$key]) ? $this->auto_segments[$key] : $this->filters[$key]);
     }
 }
 ?>

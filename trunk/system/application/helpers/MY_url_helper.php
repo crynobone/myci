@@ -20,7 +20,7 @@ if (!function_exists('index_url'))
  */
 if (!function_exists('assist_url'))
 {
-    function assist_url( $filters = array () )
+    function assist_url($filters = array ())
     {
         $CI = & get_instance();
         $CI->uri->auto_segment();
@@ -29,15 +29,15 @@ if (!function_exists('assist_url'))
 
         $keys = array ();
 
-        foreach ( $CI->uri->auto_segments as $key => $value )
+        foreach ($CI->uri->auto_segments as $key => $value)
         {
-            if ( !is_int( $key ) )
+            if (!is_int($key))
             {
-                $filter = elements( $key, $filters );
+                $filter = elements($key, $filters);
 
                 if ($filter !== FALSE)
                 {
-                    array_push( $keys, $key );
+                    array_push($keys, $key);
                     $uri .= $key . "/" . $filter . "/";
                 }
                 else
@@ -51,22 +51,22 @@ if (!function_exists('assist_url'))
             }
         }
 
-        foreach ( $filters as $fkey => $fvalue )
+        foreach ($filters as $fkey => $fvalue)
         {
-            if ( !in_array( $fkey, $keys ) )
+            if (!in_array($fkey, $keys))
 			{
-				if ( !is_int( $fkey ) )
+				if (!is_int($fkey))
 				{
 					$uri .= $fkey . "/" . $fvalue . "/";
 				}
-				else {
+				else 
+				{
 					$uri .= $fvalue . "/";
 				}
                 
 			}
 		}
 
-        return site_url( $uri );
+        return site_url($uri);
     }
 }
-?>
