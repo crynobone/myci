@@ -11,12 +11,13 @@ class Template {
 	var $main_title = '';
 	var $fragment = array(
 		'title' => '',
-		'head' => '',
-		'header' => '', 
-		'navigation' => '', 
-		'content' => '',
-		'sidebar' => '', 
-		'footer' => ''
+		'header' => '',
+		'navigation' => '',
+		'north' => '',
+		'east' => '',
+		'center' => '', 
+		'west' => '',
+		'south' => ''
 	);
 	var $response = '';
 	var $module = array();
@@ -26,9 +27,11 @@ class Template {
 	var $allowed = array(
 		'header', 
 		'navigation', 
-		'content', 
-		'sidebar', 
-		'footer'
+		'north', 
+		'east', 
+		'center',
+		'west',
+		'south'
 	);
 	
 	function Template() 
@@ -84,7 +87,7 @@ class Template {
 	{
 		if (trim($file) !== '')
 		{
-			$this->fragment['head'] .= '<script type="text/javascript" src="' . $file . '"></script>';
+			$this->fragment['header'] .= '<script type="text/javascript" src="' . $file . '"></script>';
 		}
 	}
 	function view($file, $data = array(), $part = 'content') 
@@ -159,21 +162,23 @@ class Template {
 				$data = file_get_contents(dirname( FCPATH ) . '/' . $this->directory . $this->path['STYLE'] . $this->theme . $this->filename, FALSE);
 				
 				$search = array(
-					'{{HEAD}}',
 					'{{HEADER}}',
 					'{{NAVIGATION}}',
-					'{{SIDEBAR}}',
-					'{{CONTENT}}',
-					'{{FOOTER}}'
+					'{{NORTH}}',
+					'{{EAST}}',
+					'{{CENTER}}',
+					'{{WEST}}',
+					'{{SOUTH}}'
 				);
 				
 				$replace = array(
-					$this->fragment['head'],
 					$this->fragment['header'],
 					$this->fragment['navigation'],
-					$this->fragment['sidebar'],
-					$this->fragment['content'],
-					$this->fragment['footer']
+					$this->fragment['north'],
+					$this->fragment['east'],
+					$this->fragment['center'],
+					$this->fragment['west'],
+					$this->fragment['south']
 				);
 				
 				$data = str_replace($search, $replace, $data);
