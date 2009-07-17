@@ -2,7 +2,7 @@
 	
 class Template {
 	var $theme = '';
-	var $directory = '';
+	var $directory = 'public/';
 	var $path = array(
 		'STYLE' => 'styles/',
 		'SCRIPT' => 'scripts/'
@@ -11,13 +11,12 @@ class Template {
 	var $main_title = '';
 	var $fragment = array(
 		'title' => '',
-		'header' => '',
+		'head' => '',
 		'navigation' => '',
-		'north' => '',
-		'east' => '',
-		'center' => '', 
-		'west' => '',
-		'south' => ''
+		'header' => '',
+		'sidebar' => '',
+		'content' => '', 
+		'footer' => ''
 	);
 	var $response = '';
 	var $module = array();
@@ -25,13 +24,12 @@ class Template {
 	var $type = 'html';
 	var $enabled = TRUE;
 	var $allowed = array(
-		'header', 
+		'head', 
 		'navigation', 
-		'north', 
-		'east', 
-		'center',
-		'west',
-		'south'
+		'header', 
+		'sidebar', 
+		'content',
+		'footer'
 	);
 	
 	function Template() 
@@ -87,7 +85,7 @@ class Template {
 	{
 		if (trim($file) !== '')
 		{
-			$this->fragment['header'] .= '<script type="text/javascript" src="' . $file . '"></script>';
+			$this->fragment['head'] .= '<script type="text/javascript" src="' . $file . '"></script>';
 		}
 	}
 	function view($file, $data = array(), $part = 'content') 
@@ -162,23 +160,21 @@ class Template {
 				$data = file_get_contents(dirname( FCPATH ) . '/' . $this->directory . $this->path['STYLE'] . $this->theme . $this->filename, FALSE);
 				
 				$search = array(
-					'{{HEADER}}',
+					'{{HEAD}}',
 					'{{NAVIGATION}}',
-					'{{NORTH}}',
-					'{{EAST}}',
-					'{{CENTER}}',
-					'{{WEST}}',
-					'{{SOUTH}}'
+					'{{HEADER}}',
+					'{{SIDEBAR}}',
+					'{{CONTENT}}',
+					'{{FOOTER}}'
 				);
 				
 				$replace = array(
-					$this->fragment['header'],
+					$this->fragment['head'],
 					$this->fragment['navigation'],
-					$this->fragment['north'],
-					$this->fragment['east'],
-					$this->fragment['center'],
-					$this->fragment['west'],
-					$this->fragment['south']
+					$this->fragment['header'],
+					$this->fragment['sidebar'],
+					$this->fragment['content'],
+					$this->fragment['footer']
 				);
 				
 				$data = str_replace($search, $replace, $data);
