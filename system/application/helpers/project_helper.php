@@ -97,3 +97,49 @@ if (!function_exists('is_mobile_browser'))
 		return $mobile;
 	}
 }
+
+if ( ! function_exists('get_valid_domain_name'))
+{
+	function get_valid_domain_name($domain = '')
+	{
+		$domain = prep_url($domain);
+		$domain	= preg_replace('#\http:\/\/(\S+)#i', '\\1', $domain);
+		$domain = preg_replace('#\HTTP:\/\/(\S+)#i', '\\1', $domain);
+		$domain = preg_replace('#\https:\/\/(\S+)#i', '\\1', $domain);
+		$domain = preg_replace('#\HTTPS:\/\/(\S+)#i', '\\1', $domain);
+		$domain	= preg_replace('#\www\.(\S+)#i', '\\1', $domain);
+		$domain = preg_replace('#\WWW\.(\S+)#i', '\\1', $domain);
+		$domains = split('/', $domain);
+		$dir = '/';
+		$uri = $domains[0];
+			
+		for ($loop = 0; $loop <count($domains); $loop++)
+		{
+			if ($loop == 1 && isset($domains[1]) && $domains[1] != '')
+			{
+				$uri .= '/' . $domains[1];
+			}
+			
+			if ($loop >= 1 && $domains[$loop] != '')
+			{
+				$dir .= $domains[$loop] .'/';
+			}
+		}
+		
+		return array (
+			'uri' => $uri, 
+			'domain' => $domains[0], 
+			'directory' => $dir,
+			'full' => $domain
+			
+		);
+	}
+}
+
+if ( ! function_exists('to_proper_date'))
+{
+	function to_proper_date($date)
+	{
+		return implode('-', array_reverse(explode('-', $date)));
+	}
+}
