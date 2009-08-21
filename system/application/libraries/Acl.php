@@ -48,8 +48,8 @@ class Acl {
 			$this->db->set(array(
 				'type' => 1,
 				'module_id' => $module_id,
-				'access_id' => $id,
-				'user_id' => $user_id
+				'access_type' => $id,
+				'user_data' => $user_id
 			));
 			$this->db->insert($this->config['map_table']);
 		}
@@ -68,8 +68,8 @@ class Acl {
 			$this->db->set(array(
 				'type' => 2,
 				'module_id' => $module_id,
-				'access_id' => $id,
-				'user_id' => $user_id
+				'access_type' => $id,
+				'user_data' => $user_id
 			));
 			$this->db->insert($this->config['map_table']);
 		}
@@ -99,7 +99,8 @@ class Acl {
 	{
 		$this->db->delete($this->config['map_table'], array(
 			'type' => 1,
-			'user_id' => $user_id
+			'module_id' => $module_id,
+			'user_data' => $user_id
 		));
 	}
 	
@@ -107,7 +108,8 @@ class Acl {
 	{
 		$this->db->delete($this->config['map_table'], array(
 			'type' => 2,
-			'user_id' => $role_id
+			'module_id' => $module_id,
+			'user_data' => $role_id
 		));
 	}
 	
@@ -121,9 +123,10 @@ class Acl {
 			$this->db->from($this->config['map_table']);
 			$this->db->where(array(
 				'type' => 1,
-				'user_id' => $user_id
+				'user_data' => $user_id,
+				'module_id' => $module_id
 			));
-			$this->db->where('access_id >=', (int)$id);
+			$this->db->where('access_type >=', (int)$id);
 			
 			$query_user = $this->db->get();
 			
@@ -138,9 +141,10 @@ class Acl {
 			$this->db->from($this->config['map_table']);
 			$this->db->where(array(
 				'type' => 2,
-				'user_id' => $role_id
+				'user_data' => $role_id,
+				'module_id' => $module_id
 			));
-			$this->db->where('access_id >=', (int)$id);
+			$this->db->where('access_type >=', (int)$id);
 			
 			$query_role = $this->db->get();
 			
@@ -179,6 +183,7 @@ class Acl {
 	function _fetch_modules()
 	{
 		$data = array ();
+		
 		$this->db->from($this->config['table']);
 		$this->db->where('module_status', 1);
 		$query = $this->db->get();

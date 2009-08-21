@@ -95,12 +95,23 @@ $config['auth']['expire'] = 0;
 | DATABASE INSERT QUERY
 | -------------------------------------------------------------------
 
-CREATE TABLE `ci_modules` (
+-- START DATABASE QUERY 
+
+CREATE TABLE IF NOT EXISTS `ci_modules` (
 `module_id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
 `module_name` VARCHAR( 200 ) NOT NULL ,
 `module_status` INT( 1 ) NOT NULL DEFAULT '1'
 ) ENGINE = MYISAM ;
 
+CREATE TABLE IF NOT EXISTS `ci_acl_map` (
+  `type` int(11) NOT NULL,
+  `access_type` int(11) NOT NULL,
+  `module_id` int(11) NOT NULL,
+  `user_data` int(11) NOT NULL,
+  KEY `type` (`type`,`user_data`)
+) ENGINE=MyISAM ;
+
+-- END DATABASE QUERY 
 
 */
 $config['acl']['table'] = 'ci_modules';
