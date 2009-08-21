@@ -77,6 +77,34 @@ $config['auth']['column']['role'] = '';
 $config['auth']['column']['status'] = '';
 $config['auth']['expire'] = 0;
 
+/*
+|--------------------------------------------------------------------------
+| ACL
+|--------------------------------------------------------------------------
+|
+| Enable you to validate ACL
+|
+| -------------------------------------------------------------------
+| EXPLANATION OF VARIABLES
+| -------------------------------------------------------------------
+| REQUIRED VARIABLES:
+|	['table']				Module database table name
+|	['map_table']			ACL mapping database table name
+|
+| -------------------------------------------------------------------
+| DATABASE INSERT QUERY
+| -------------------------------------------------------------------
+
+CREATE TABLE `ci_modules` (
+`module_id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+`module_name` VARCHAR( 200 ) NOT NULL ,
+`module_status` INT( 1 ) NOT NULL DEFAULT '1'
+) ENGINE = MYISAM ;
+
+
+*/
+$config['acl']['table'] = 'ci_modules';
+$config['acl']['map_table'] = 'ci_acl_map';
 
 /*
 |--------------------------------------------------------------------------
