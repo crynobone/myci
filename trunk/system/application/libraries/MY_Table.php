@@ -142,9 +142,9 @@ class MY_Table extends CI_Table
 	function _default_template()
 	{
 		return  array (
-			'table_open' 			=> '<table class="datagrid">',
+			'table_open' 			=> '<table class="fixed widefat">',
 
-			'heading_row_start' 	=> '<tr>',
+			'heading_row_start' 	=> '<tr class="thead">',
 			'heading_row_end' 		=> '</tr>',
 			'heading_cell_start'	=> '<th>',
 			'heading_cell_end'		=> '</th>',
@@ -159,7 +159,7 @@ class MY_Table extends CI_Table
 			'cell_alt_start'		=> '<td>',
 			'cell_alt_end'			=> '</td>',
 			
-			'summary_row_start' 	=> '<tr class="footer">',
+			'summary_row_start' 	=> '<tr class="tfoot">',
 			'summary_row_end' 		=> '</tr>',
 			'summary_cell_start'	=> '<td>',
 			'summary_cell_end'		=> '</td>',
