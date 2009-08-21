@@ -65,7 +65,7 @@ class Template {
 	}
 	function set_title($title = '')
 	{
-		$this->title = $title;
+		$this->main_title = $title;
 	}
 	function set_template($dir = '') 
 	{
@@ -189,9 +189,9 @@ class Template {
 	{
 		$title = $this->site_name;
 			
-		if (trim($this->title) != '') 
+		if (trim($this->main_title) != '') 
 		{
-			$title = $this->title.' &raquo; ' . $title;
+			$title = $this->main_title.' &raquo; ' . $title;
 		}
 		
 		$search = array(
@@ -206,7 +206,7 @@ class Template {
 		);
 		
 		$replace = array(
-			$this->title,
+			$this->main_title,
 			$title,
 			$this->site_name,
 			current_url(),

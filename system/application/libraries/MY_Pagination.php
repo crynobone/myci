@@ -2,7 +2,12 @@
 
 class MY_Pagination extends CI_Pagination
 {
-    var $suffix_url = "";
+    var $suffix_url 		= "";
+	var $first_link   		= 'First';
+	var $next_link			= 'Next';
+	var $prev_link			= 'Prev';
+	var $last_link			= 'Last';
+	
     function MY_Pagination($params = array ())
     {
         parent::CI_Pagination($params);
