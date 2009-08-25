@@ -9,7 +9,7 @@ class Adodb
 			 require_once(APPPATH . 'libraries/adodb5/adodb.inc.php');
 		}
 
-		$ci =& get_instance();
+		$CI =& get_instance();
 		$db_var = false;
 		$debug = false;
 		
@@ -28,14 +28,14 @@ class Adodb
 		}
 		
 		// $ci is by reference, refers back to global instance
-		$ci->adodb =& ADONewConnection($dsn);
+		$CI->adodb =& ADONewConnection($dsn);
 		
 		if ($debug)
 		{
-			$ci->adodb->debug = TRUE;
+			$CI->adodb->debug = TRUE;
 		}
 		
-		array_push($ci->ci_is_loaded, 'adodb');
+		array_push($CI->ci_is_loaded, 'adodb');
 		
 		return $this;
 	}

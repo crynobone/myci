@@ -2,9 +2,9 @@
 
 class Authentication
 {
-    var $ci 		= NULL;
+    var $CI 		= NULL;
 	var $test 		= array ('id', 'name', 'pass', 'role', 'status');
-	var $optional 	= array ('status', 'fullname', 'email');
+	var $optional 	= array ('fullname', 'email');
     var $member 	= array (
 	    'id' => 0,
 	    'name' => 'guest',
@@ -17,10 +17,10 @@ class Authentication
 	
     function Authentication()
     {
-        $this->ci =& get_instance();
+        $this->CI =& get_instance();
         
-		$this->ci->config->load('application', TRUE);
-		$this->config = $this->ci->config->item('auth', 'application');
+		$this->CI->config->load('application', TRUE);
+		$this->config = $this->CI->config->item('auth', 'application');
 		
 		$this->_generate();
 	}
@@ -28,9 +28,9 @@ class Authentication
 	{
 		$has_session = FALSE;
 		
-        if ($this->ci->input->cookie($this->config['cookie']) && $this->config['enable'] === TRUE)
+        if ($this->CI->input->cookie($this->config['cookie']) && $this->config['enable'] === TRUE)
 		{
-            $cookies = html_entity_decode($this->ci->input->cookie($this->config['cookie'], TRUE));
+            $cookies = html_entity_decode($this->CI->input->cookie($this->config['cookie'], TRUE));
             $cookie = explode( "|", $cookies );
 
             if ($cookie[2] > 0)
@@ -48,7 +48,7 @@ class Authentication
 					{
 						foreach ($this->test as $value)
 						{
-							if (trim($row[$this->config['column'][$value]]) !== '' ) 
+							if (isset($row[$this->config['column'][$value]]) && trim($row[$this->config['column'][$value]]) !== '' ) 
 							{
 								$this->member[$value] = $row[$this->config['column'][$value]];
 							}
@@ -56,7 +56,7 @@ class Authentication
 						
 						foreach ($this->optional as $value)
 						{
-							if (trim($row[$this->config['column'][$value]]) !== '') 
+							if (isset($row[$this->config['column'][$value]]) && trim($row[$this->config['column'][$value]]) !== '') 
 							{
 								$this->member[$value] = $row[$this->config['column'][$value]];
 							}
@@ -77,8 +77,8 @@ class Authentication
 			$this->_create();
         }
 
-        $this->ci->auth = $this->member;
-        $this->ci->authentication = $this;
+        $this->CI->auth = $this->member;
+        $this->CI->authentication = $this;
     }
 	function _generate_query($cookie = array())
 	{
@@ -92,7 +92,7 @@ class Authentication
 			}
 			else 
 			{
-				$this->ci->db->select($this->config['column'][$value]);
+				$this->CI->db->select($this->config['column'][$value]);
 			}
 		}
 		
@@ -100,7 +100,7 @@ class Authentication
 		{
 			if (trim($this->config['column'][ $value ]) !== '') 
 			{
-				$this->ci->db->select($this->config['column'][$value]);
+				$this->CI->db->select($this->config['column'][$value]);
 			}
 		}
 		
@@ -108,19 +108,19 @@ class Authentication
 		{
 			if (trim($this->config['table_meta']) !== '' && trim($this->config['column']['key']) !== '')
 			{
-				$this->ci->db->join(
+				$this->CI->db->join(
 					$this->config['table_meta'],
 					$this->config['column']['key'] . '=' . $this->config['column']['id'], 
 					'left'
 				);
 			}
 			
-			$this->ci->db->where($this->config['column']['id'], $cookie[0]);
-			$this->ci->db->where($this->config['column']['role'], $cookie[2]);
-			$this->ci->db->limit(1);
-			$this->ci->db->from($this->config['table']);
+			$this->CI->db->where($this->config['column']['id'], $cookie[0]);
+			$this->CI->db->where($this->config['column']['role'], $cookie[2]);
+			$this->CI->db->limit(1);
+			$this->CI->db->from($this->config['table']);
 			
-			return $this->ci->db->get();
+			return $this->CI->db->get();
 		}
 		else {
 			return NULL;

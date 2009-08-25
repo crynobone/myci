@@ -2,7 +2,7 @@
 
 class Fbconnect_authentication
 {
-    var $ci 		= NULL;
+    var $CI 		= NULL;
 	var $test 		= array ('id', 'name', 'pass', 'role');
 	var $optional 	= array ();
     var $member 	= array (
@@ -17,12 +17,12 @@ class Fbconnect_authentication
 	
     function Fbconnect_authentication()
     {
-        $this->ci =& get_instance();
+        $this->CI =& get_instance();
 		
-		$this->ci->load->library('Facebook_connect');
+		$this->CI->load->library('Facebook_connect');
 		
-		$this->ci->config->load('application', TRUE);
-		$this->config = $this->ci->config->item('auth', 'application');
+		$this->CI->config->load('application', TRUE);
+		$this->config = $this->CI->config->item('auth', 'application');
 		
 		$this->_generate();	
 	}
@@ -30,14 +30,14 @@ class Fbconnect_authentication
 	{
 		$has_session = FALSE;
 		
-		$fb = $this->ci->fb_connect->initiate();
+		$fb = $this->CI->fb_connect->initiate();
 		
-        if ($this->ci->input->cookie($this->config['cookie']) && $this->config['enable'] === TRUE AND $fb !== FALSE)
+        if ($this->CI->input->cookie($this->config['cookie']) && $this->config['enable'] === TRUE AND $fb !== FALSE)
 		{
 			if (is_array($fb) && isset($fb['value'])) :
 				$cookies = $fb['value'];
 			else :
-				$cookies = html_entity_decode($this->ci->input->cookie($this->config['cookie'], TRUE));
+				$cookies = html_entity_decode($this->CI->input->cookie($this->config['cookie'], TRUE));
 			endif;
 			
             $cookie = explode("|", $cookies);
@@ -86,8 +86,8 @@ class Fbconnect_authentication
 			$this->_create();
         }
 
-        $this->ci->auth = $this->member;
-        $this->ci->authentication = $this;
+        $this->CI->auth = $this->member;
+        $this->CI->authentication = $this;
     }
 	function _generate_query()
 	{
@@ -105,7 +105,7 @@ class Fbconnect_authentication
 			}
 			else 
 			{
-				$this->ci->db->select($this->config['column'][$value]);	
+				$this->CI->db->select($this->config['column'][$value]);	
 			}
 		}
 		
@@ -113,7 +113,7 @@ class Fbconnect_authentication
 		{
 			if (trim($this->config['column'][ $value ]) !== '') 
 			{
-				$this->ci->db->select($this->config['column'][$value]);
+				$this->CI->db->select($this->config['column'][$value]);
 			}
 		}
 		
@@ -121,19 +121,19 @@ class Fbconnect_authentication
 		{
 			if (trim($this->config['table_meta']) !== '' && trim($this->config['column']['key']) !== '')
 			{
-				$this->ci->db->join(
+				$this->CI->db->join(
 					$this->config['table_meta'],
 					$this->config['column']['key'] . '=' . $this->config['column']['id'],
 					'left'
 				);
 			}
 			
-			$this->ci->db->where($this->config['column']['id'], $cookie[0]);
-			$this->ci->db->where($this->config['column']['role'], $cookie[2]);
-			$this->ci->db->limit(1);
-			$this->ci->db->from($this->config['table']);
+			$this->CI->db->where($this->config['column']['id'], $cookie[0]);
+			$this->CI->db->where($this->config['column']['role'], $cookie[2]);
+			$this->CI->db->limit(1);
+			$this->CI->db->from($this->config['table']);
 			
-			return $this->ci->db->get();
+			return $this->CI->db->get();
 		}
 		else {
 			return NULL;
@@ -141,7 +141,7 @@ class Fbconnect_authentication
 	}
     function _create()
     {
-    	$user = $this->ci->fb_user;
+    	$user = $this->CI->fb_user;
 		
 		$value = "0|" . md5( 'guest' ) . "|0";
 		

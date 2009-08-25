@@ -2,18 +2,18 @@
 
 class Option
 {
-	var $ci 		= NULL;
+	var $CI 		= NULL;
 	var $enabled	= FALSE;
 	var $data		= array();
 	var $config 	= array();
 	
 	function Option()
 	{
-		$this->ci =& get_instance();
-		$this->ci->option = $this;
+		$this->CI =& get_instance();
+		$this->CI->option = $this;
 		
-		$this->ci->config->load('application', TRUE);
-		$this->config = $this->ci->config->item('option', 'application');
+		$this->CI->config->load('application', TRUE);
+		$this->config = $this->CI->config->item('option', 'application');
 		
 		$this->_is_enable();
 		$this->_cache_all();
@@ -46,10 +46,10 @@ class Option
 	{
 		if ($this->enabled === TRUE) 
 		{
-			$this->ci->db->select($this->config['attribute']);
-			$this->ci->db->select($this->config['value']);
-			$this->ci->db->from($this->config['table']);
-			$query = $this->ci->db->get();
+			$this->CI->db->select($this->config['attribute']);
+			$this->CI->db->select($this->config['value']);
+			$this->CI->db->from($this->config['table']);
+			$query = $this->CI->db->get();
 			
 			foreach ($query->result_array() as $row) 
 			{
@@ -82,12 +82,12 @@ class Option
 			{
 				$data[$this->config['attribute']] = $name;
 				
-				$this->ci->db->insert($this->config['table'], $data);
+				$this->CI->db->insert($this->config['table'], $data);
 			}
 			else 
 			{
-				$this->ci->db->where($this->config['attribute'], $name);
-				$this->ci->db->update($this->config['table'], $data);
+				$this->CI->db->where($this->config['attribute'], $name);
+				$this->CI->db->update($this->config['table'], $data);
 			}
 			
 			$this->data[$name] = $value;
@@ -97,8 +97,8 @@ class Option
 	{
 		if ($this->enabled === TRUE && trim($name) !== '') 
 		{
-			$this->ci->db->where($this->config['attribute'], $name);
-			$this->ci->db->delete($this->config['table']);
+			$this->CI->db->where($this->config['attribute'], $name);
+			$this->CI->db->delete($this->config['table']);
 			
 			$this->data[$name] = FALSE;
 		}
