@@ -1,11 +1,14 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
 class Simple_form {
-	var $ci = NULL;
-	var $fields = array();
+	var $CI = NULL;
+	var $fields = array ();
 	var $validate = TRUE;
-	var $data = array();
+	var $data = array ();
+	var $full_data = array ();
+	var $result = array ();
 	var $success = TRUE;
+	
 	var $template = array (
 		'fieldset' => 'table',
 		'fieldset_class' => 'sf_table',
@@ -19,15 +22,15 @@ class Simple_form {
 		'error_class' => 'errorbox'
 	);
 	
-	function __construct()
+	function Simple_form()
 	{
-		$this->ci =& get_instance();
-		$this->ci->load->library(array(
+		$this->CI =& get_instance();
+		$this->CI->load->library(array(
 			'form_validation'
 		));
-		$this->ci->load->helper('form');
+		$this->CI->load->helper('form');
 		
-		$this->ci->simple_form = $this;
+		$this->CI->simple_form = $this;
 	}
 	
 	function validation($valid = TRUE)
@@ -54,22 +57,37 @@ class Simple_form {
 		{
 			$field = $this->_tune_field($field);
 			$type = strtolower($field['type']);
+			
 			if ($type === 'checkbox')
 			{
-				$checkbox = strtolower($this->ci->input->post($id . '_' . $field['id'], $field['xss']));
+				$checkbox = strtolower($this->CI->input->post($id . '_' . $field['id'], $field['xss']));
 				
 				$data[$field['id']] = (( !! isset($checkbox) && $checkbox === 'true') ? TRUE : FALSE);
 			}
 			else 
 			{
-				$data[$field['id']] = $this->ci->input->post($id . '_' . $field['id'], $field['xss']);
+				$data[$field['id']] = $this->CI->input->post($id . '_' . $field['id'], $field['xss']);
 			}
 		}
 		
 		$this->data = array_merge($this->data, $data);
+		$this->full_data = array_merge($this->full_data, array("$id" => $data));
 		
 		return $data;
 	}
+	
+	function result($id = '')
+	{
+		if (trim($id) !== '')
+		{
+			return $this->full_data[$id];
+		}
+		else 
+		{
+			return $this->data;
+		}
+	}
+	
 	function generate($options = array(), $id = 'default')
 	{
 		$this->vars($options, $id);
@@ -88,10 +106,10 @@ class Simple_form {
 		{
 			$field = $this->_tune_field($field);
 			$name = $pre . $field['id'];
-			$this->ci->form_validation->set_rules($name, $field['name'], $field['rule']);
+			$this->CI->form_validation->set_rules($name, $field['name'], $field['rule']);
 		}
 		
-		$run = $this->ci->form_validation->run();
+		$run = $this->CI->form_validation->run();
 		
 		foreach ($fields as $field) 
 		{
@@ -234,8 +252,11 @@ class Simple_form {
 			$this->success = FALSE;
 		}
 		
+		$this->result[$id] = $run;
+		
 		return form_hidden($hidden) . $output;
 	}
+	
 	function _tune_field($field = array())
 	{
 		$default = array(
@@ -254,6 +275,7 @@ class Simple_form {
 		
 		return $result = array_merge($default, $field);
 	}
+	
 	function _pick_standard($name, $field)
 	{
 		
@@ -264,14 +286,23 @@ class Simple_form {
 		
 		return set_value($name, $field['value']);
 	}
+	
 	function set_template($data) {
 		if (is_array($data)) 
 		{
 			$this->template = array_merge($this->template, $data);
 		}
 	}
-	function run()
+	
+	function run($id = '')
 	{
-		return $this->success;
+		if (trim($id) !== '')
+		{
+			return $this->success;
+		}
+		else {
+			return $this->result[$id];
+		}
+		
 	}
 }

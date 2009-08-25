@@ -1,21 +1,21 @@
 <?php if(!defined('BASEPATH')) exit('No direct script access allowed');
 
 class Acl {
-	var $ci = NULL;
+	var $CI = NULL;
 	var $config = array ();
 	var $modules = array ();
 	var $access_type = array ('NONE', 'READ', 'WRITE', 'MODIFY', 'DELETE');
 	
 	function Acl()
 	{
-		$ci =& get_instance();
+		$this->CI =& get_instance();
 		
-		$this->ci->config->load('application', TRUE);
-		$this->config = $this->ci->config->item('acl', 'application');
+		$this->CI->config->load('application', TRUE);
+		$this->config = $this->CI->config->item('acl', 'application');
 		
 		$this->_fetch_modules();
 		
-		$ci->acl = $this;
+		$this->CI->acl = $this;
 	}
 	
 	function register_module($module_name = '')
@@ -24,13 +24,13 @@ class Acl {
 		
 		if (is_string($module_name) && trim($module_name) !== '')
 		{
-			$this->db->set(array (
+			$this->CI->db->set(array (
 				'module_name' => $module_name,
 				'module_status' => 1
 			));
-			$this->db->insert($this->config['table']);
+			$this->CI->db->insert($this->config['table']);
 			
-			$id = $this->db->insert_id();
+			$id = $this->CI->db->insert_id();
 		}
 		
 		return $id;
@@ -45,13 +45,13 @@ class Acl {
 		if ($overwrite === TRUE || $acl_exist === FALSE)
 		{
 			$this->remove_by_user($module_id, $user_id);
-			$this->db->set(array(
+			$this->CI->db->set(array(
 				'type' => 1,
 				'module_id' => $module_id,
 				'access_type' => $id,
 				'user_data' => $user_id
 			));
-			$this->db->insert($this->config['map_table']);
+			$this->CI->db->insert($this->config['map_table']);
 		}
 	}
 	
@@ -65,13 +65,13 @@ class Acl {
 		if ($overwrite === TRUE || $acl_exist === FALSE)
 		{
 			$this->remove_by_role($module_id, $role_id);
-			$this->db->set(array(
+			$this->CI->db->set(array(
 				'type' => 2,
 				'module_id' => $module_id,
 				'access_type' => $id,
 				'user_data' => $user_id
 			));
-			$this->db->insert($this->config['map_table']);
+			$this->CI->db->insert($this->config['map_table']);
 		}
 	}
 	
@@ -81,11 +81,11 @@ class Acl {
 		
 		if (is_int($module_id) && $module_id > 0)
 		{
-			$this->db->set(array (
+			$this->CI->db->set(array (
 				'module_status' => 0
 			));
-			$this->db->where('module_id', $module_id);
-			$this->db->update($this->config['table']);
+			$this->CI->db->where('module_id', $module_id);
+			$this->CI->db->update($this->config['table']);
 			
 			$result = TRUE;
 			
@@ -97,7 +97,7 @@ class Acl {
 	
 	function remove_user ($module_id = 0, $user_id = 0)
 	{
-		$this->db->delete($this->config['map_table'], array(
+		$this->CI->db->delete($this->config['map_table'], array(
 			'type' => 1,
 			'module_id' => $module_id,
 			'user_data' => $user_id
@@ -106,7 +106,7 @@ class Acl {
 	
 	function remove_role ($module_id = 0, $role_id = 0)
 	{
-		$this->db->delete($this->config['map_table'], array(
+		$this->CI->db->delete($this->config['map_table'], array(
 			'type' => 2,
 			'module_id' => $module_id,
 			'user_data' => $role_id
@@ -120,15 +120,15 @@ class Acl {
 		
 		if (is_int($user_id) && $user_id > 0) 
 		{
-			$this->db->from($this->config['map_table']);
-			$this->db->where(array(
+			$this->CI->db->from($this->config['map_table']);
+			$this->CI->db->where(array(
 				'type' => 1,
 				'user_data' => $user_id,
 				'module_id' => $module_id
 			));
-			$this->db->where('access_type >=', (int)$id);
+			$this->CI->db->where('access_type >=', (int)$id);
 			
-			$query_user = $this->db->get();
+			$query_user = $this->CI->db->get();
 			
 			if ($query_user->num_rows() > 0)
 			{
@@ -138,15 +138,15 @@ class Acl {
 		
 		if (is_int($role_id) && $role_id > 0) 
 		{
-			$this->db->from($this->config['map_table']);
-			$this->db->where(array(
+			$this->CI->db->from($this->config['map_table']);
+			$this->CI->db->where(array(
 				'type' => 2,
 				'user_data' => $role_id,
 				'module_id' => $module_id
 			));
-			$this->db->where('access_type >=', (int)$id);
+			$this->CI->db->where('access_type >=', (int)$id);
 			
-			$query_role = $this->db->get();
+			$query_role = $this->CI->db->get();
 			
 			if ($query_role->num_rows() > 0)
 			{
@@ -184,9 +184,9 @@ class Acl {
 	{
 		$data = array ();
 		
-		$this->db->from($this->config['table']);
-		$this->db->where('module_status', 1);
-		$query = $this->db->get();
+		$this->CI->db->from($this->config['table']);
+		$this->CI->db->where('module_status', 1);
+		$query = $this->CI->db->get();
 		
 		foreach ($query->result() as $row)
 		{

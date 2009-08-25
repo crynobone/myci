@@ -9,6 +9,7 @@ class Template {
 	);
 	var $filename = 'index';
 	var $main_title = '';
+	var $alt_title = '';
 	var $fragment = array(
 		'title' => '',
 		'head' => '',
@@ -46,14 +47,17 @@ class Template {
 		$this->ci->ui = $this;
 		$this->ci->template = $this;
 	}
+	
 	function enable()
 	{
 		$this->enabled = TRUE;
 	}
+	
 	function disable()
 	{
 		$this->enabled = FALSE;
 	}
+	
 	function set_output($type = 'html') 
 	{
 		$allowed = array('json', 'text', 'html');
@@ -63,10 +67,17 @@ class Template {
 			$this->type = $type;
 		}
 	}
+	
 	function set_title($title = '')
 	{
 		$this->main_title = $title;
 	}
+	
+	function replace_title($title = '')
+	{
+		$this->alt_title = $title;
+	}
+	
 	function set_template($dir = '') 
 	{
 		if (is_dir($this->directory . $this->path['STYLE'] . $dir)) 
@@ -74,6 +85,21 @@ class Template {
 			$this->theme = $dir;
 		}
 	}
+	
+	function set_module($attr, $html = '')
+	{
+		if (is_array($attr)) 
+		{
+			foreach ($attr as $key => $value)
+			{
+				$this->module[$key] = $value;
+			}
+		}
+		else {
+			$this->module[$attr] = $html;
+		}
+	}
+	
 	function set_file($file = '') 
 	{
 		if (is_file($this->directory . $this->path['STYLE'] . $this->theme . $file)) 
@@ -81,6 +107,7 @@ class Template {
 			$this->filename = $file;
 		}
 	}
+	
 	function add_script($file = '')
 	{
 		if (trim($file) !== '')
@@ -88,6 +115,13 @@ class Template {
 			$this->fragment['head'] .= '<script type="text/javascript" src="' . $file . '"></script>';
 		}
 	}
+	
+	function no_cache()
+	{
+		$this->output->set_header("Cache-Control: no-cache, must-revalidate");
+		$this->output->set_header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
+	}
+	
 	function view($file, $data = array(), $part = 'content') 
 	{
 		$part = (($part == NULL || $part == '') ? 'content' : $part);
@@ -97,6 +131,7 @@ class Template {
 			$this->fragment[$part] .= $this->ci->load->view($file, $data, TRUE);
 		}
 	}
+	
 	function parse($file, $data = array(), $part = 'content') 
 	{
 		$part = (($part == NULL || $part == '') ? 'content' : $part);
@@ -106,6 +141,7 @@ class Template {
 			$this->fragment[$part] .= $this->ci->parser->parse($file, $data, TRUE);
 		}
 	}
+	
 	function clear($part = '') 
 	{
 		$part = (($part == NULL || $part == '') ? 'content' : $part);
@@ -115,6 +151,7 @@ class Template {
 			$this->fragment[$part] = '';
 		}
 	}
+	
 	public function append($content = '', $part = 'content') 
 	{
 		$part = (($part == NULL || $part == '') ? 'content' : $part);
@@ -124,6 +161,7 @@ class Template {
 			$this->fragment[$part] .= $content;
 		}
 	}
+	
 	function prepend($content = '', $part = 'content') 
 	{
 		$part = (($part == NULL || $part == '') ? 'content' : $part);
@@ -133,15 +171,13 @@ class Template {
 			$this->fragment[$part] = $content . $this->$part;
 		}
 	}
-	function render() 
-	{
-		$this->publish();
-	}
+	
 	function data($data)
 	{
 		$this->response = $data;
 	}
-	function publish() 
+	
+	function render() 
 	{
 		if ( !! $this->enabled) 
 		{
@@ -185,14 +221,22 @@ class Template {
 			}
 		}
 	}
+	
 	function _standard($data) 
 	{
 		$title = $this->site_name;
-			
+		
+		if (trim($this->alt_title) != '') 
+		{
+			$title = $this->alt_title;
+		}
+		
 		if (trim($this->main_title) != '') 
 		{
-			$title = $this->main_title.' &raquo; ' . $title;
+			$title = $this->main_title . ' &raquo; ' . $title;
 		}
+		
+		
 		
 		$search = array(
 			'{{PAGE-NAME}}',
