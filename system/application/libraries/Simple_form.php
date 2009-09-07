@@ -10,14 +10,14 @@ class Simple_form {
 	var $success = TRUE;
 	
 	var $template = array (
-		'fieldset' => 'table',
-		'fieldset_class' => 'sf_table',
-		'group' => 'tr',
-		'group_class' => 'sf_col',
-		'label' => 'td',
-		'label_class' => 'sf_row_desc',
-		'field' => 'td',
-		'field_class' => 'sf_row_field',
+		'fieldset' => 'fieldset',
+		'fieldset_class' => '',
+		'group' => 'div',
+		'group_class' => 'fields',
+		'label' => 'label',
+		'label_class' => '',
+		'field' => 'div',
+		'field_class' => '',
 		'error' => 'div',
 		'error_class' => 'errorbox'
 	);

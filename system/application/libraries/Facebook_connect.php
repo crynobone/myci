@@ -14,7 +14,7 @@ include(APPPATH.'libraries/facebook-client/facebook.php');
 
 class Facebook_connect {
 
-	private $CI;
+	public $CI;
 	private $_api_key		= NULL;
 	private $_secret_key	= NULL;
 	public 	$user 			= NULL;
