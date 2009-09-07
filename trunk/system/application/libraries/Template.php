@@ -39,6 +39,7 @@ class Template {
 		
 		$this->ci->config->load('application', TRUE);
 		$this->site_name = $this->ci->config->item('site_name', 'application');
+		$this->site_tagline = $this->ci->config->item('site_tagline', 'application');
 		$config = $this->ci->config->item('template', 'application');
 		
 		$this->theme = $config['theme'] . '/';
@@ -225,10 +226,9 @@ class Template {
 	function _standard($data) 
 	{
 		$title = $this->site_name;
-		
-		if (trim($this->alt_title) != '') 
+		if (trim($this->site_tagline) != '')
 		{
-			$title = $this->alt_title;
+			$title .= ' | ' . $this->site_tagline;
 		}
 		
 		if (trim($this->main_title) != '') 
@@ -236,12 +236,17 @@ class Template {
 			$title = $this->main_title . ' &raquo; ' . $title;
 		}
 		
+		if (trim($this->alt_title) != '') 
+		{
+			$title = $this->alt_title;
+		}
 		
 		
 		$search = array(
 			'{{PAGE-NAME}}',
 			'{{PAGE-TITLE}}',
 			'{{TITLE}}',
+			'{{TAGLINE}}',
 			'{{URI}}',
 			'{{BASE-URI}}',
 			'{{INDEX-URI}}',
@@ -253,6 +258,7 @@ class Template {
 			$this->main_title,
 			$title,
 			$this->site_name,
+			$this->site_tagline,
 			current_url(),
 			base_url(),
 			site_url(),
