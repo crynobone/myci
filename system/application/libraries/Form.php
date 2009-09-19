@@ -1,6 +1,6 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
-class Simple_form {
+class Form {
 	var $CI = NULL;
 	var $fields = array ();
 	var $validate = TRUE;
@@ -22,7 +22,7 @@ class Simple_form {
 		'error_class' => 'errorbox'
 	);
 	
-	function Simple_form()
+	function Form()
 	{
 		$this->CI =& get_instance();
 		$this->CI->load->library(array(
@@ -30,7 +30,7 @@ class Simple_form {
 		));
 		$this->CI->load->helper('form');
 		
-		$this->CI->simple_form = $this;
+		$this->CI->form = $this;
 	}
 	
 	function validation($valid = TRUE)
