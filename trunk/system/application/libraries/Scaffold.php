@@ -1,6 +1,5 @@
 <?php
 
-
 class Scaffold {
 	var $CI = NULL;
 	var $default_response = array (
@@ -29,29 +28,45 @@ class Scaffold {
 		));
 		
 		$this->CI->scaffold = $this;
+		
+		log_message('debug', "Scaffold Class Initialized");
 	}
 	
-	function initiate($data = array ())
+	function initialize($data = array ())
 	{
-		$this->data = array_merge($this->data, data);
+		$this->data = array_merge($this->data, $data);
+		
+		$segment = trim($this->data['segment']);
+		$is_retrieve = array ('index', '', 'retrieve');
+		$is_editable = array ('editable', 'edit', 'add');
+		$send_to = '';
+		
+		if (isset($segment))
+		{
+			$send_to = (in_array($segment, $is_retrieve) ? 'retrieve' : $send_to);
+			$send_to = (in_array($segment, $is_editable) ? 'editable' : $send_to);
+			
+			$this->run($send_to);
+		}
 	}
 	
 	function run($type = 'retrieve')
 	{
-		$allowed = array ('retrieve', 'editable');
+		$allowed = array ('retrieve', 'editable', 'remove');
 		$type = trim(strtolower($type));
 		
 		if ( !! in_array($type, $allowed))
 		{
 			$this->{$type}($this->data[$type]);
 		}
+		else 
+		{
+			log_message('error', 'Scaffold: Unable to determine request ' . $type);
+		}
 	}
 	function retrieve($data = array ())
 	{
 		$data = $this->_prepare_retrieve($data);
-		
-		$this->CI->table->clear();
-		$this->CI->table->set_heading($data['header']);
 		
 		$datagrid = NULL;
 		$output = array (
@@ -72,6 +87,11 @@ class Scaffold {
 				$output['data'] = $datagrid['data'];
 				$output['total_rows'] = $datagrid['total_rows'];
 				
+				if ( isset($datagrid['header']) && is_array($datagrid['header']))
+				{
+					$data['header'] = $datagrid['header'];
+				}
+				
 				$config = array (
 					'base_url' => $data['base_url'],
 					'total_rows' => $output['total_rows'],
@@ -80,7 +100,10 @@ class Scaffold {
 					'suffix_url' => $data['suffix_url']
 				);
 				
-				$this->CI->pagination->initiate($config);
+				$this->CI->table->clear();
+				$this->CI->table->set_heading($data['header']);
+				
+				$this->CI->pagination->initialize($config);
 				
 				$output['html']['datagrid'] = $this->CI->table->generate($output['data']);
 				$output['html']['pagination'] = $this->CI->pagination->create_links();
@@ -95,10 +118,17 @@ class Scaffold {
 			log_message('error', 'Scaffold: cannot locate Application model class');
 		}
 		
-		
 		if ( !! method_exists($this->CI, $data['callback']))
 		{
 			$this->CI->{$data['callback']}($output);
+		}
+		elseif ( trim($data['view']) !== '')
+		{
+			$view = $data['output'];
+			$view = array_merge($data['output'], $output['html']);
+			
+			$this->CI->ui->view($data['view'], $view);
+			$this->CI->ui->render();
 		}
 		else 
 		{
@@ -117,19 +147,31 @@ class Scaffold {
 			'response' => $this->default_response
 		);
 		
-		if (is_array($data['fields']) && count($data['fields']) > 0)
+		if ( !! property_exists($this->CI, $data['model']))
 		{
-			$output['html']['form'] = $this->CI->form->generate($data['fields'], $data['prefix']);
 			
-			if ( !! $this->CI->form->run($data['prefix']))
+			if (trim($data['callback_fields']) !== '' && method_exists($this->CI->{$data['model']}, $data['callback_fields']))
 			{
-				$result = $this->CI->form->result($data['prefix']);
+				$data['fields'] = $this->CI->{$data['model']}->{$data['callback_fields']}($data['id']);
+			}
+			
+			if (trim($data['callback_data']) !== '' && method_exists($this->CI->{$data['model']}, $data['callback_data']))
+			{
+				$data['data'] = $this->CI->{$data['model']}->{$data['callback_data']}($data['id']);
+			}
+			
+			if (is_array($data['fields']) && count($data['fields']) > 0)
+			{
+				$output['html']['form'] = $this->CI->form->generate($data['fields'], $data['prefix'], $data['data']);
 				
-				if ( !! property_exists($this->CI, $data['model']))
+				if ( !! $this->CI->form->run($data['prefix']))
 				{
+					$result = $this->CI->form->result($data['prefix']);
+					
+					
 					if ( !! method_exists($this->CI->{$data['model']}, $data['method']))
 					{
-						$output['response'] = $this->CI->{$data['model']}->{$data['method']}($result);
+						$output['response'] = $this->CI->{$data['model']}->{$data['method']}($result, $this->default_response);
 					}
 					else 
 					{
@@ -150,36 +192,43 @@ class Scaffold {
 							$this->CI->form->template['error']
 						);
 					}
+					
 				}
-				else 
-				{
-					log_message('error', 'Scaffold: cannot locate Application model class');
-				}
-			}
-			
-			
-			if ( !! method_exists($this->CI, $data['callback']))
-			{
-				$this->CI->{$data['callback']}($output);
-			}
-			else 
-			{
-				return $output;
+				
 			}
 		}
 		else 
 		{
-			log_message('error', 'Scaffold: form fields is empty or not an array');
+			log_message('error', 'Scaffold: cannot locate Application model class');
+		}
+			
+		if ( !! method_exists($this->CI, $data['callback']))
+		{
+			$this->CI->{$data['callback']}($output);
+		}
+		elseif ( trim($data['view']) !== '')
+		{
+			$view = $data['output'];
+			$view = array_merge($data['output'], $output['html']);
+			
+			$this->CI->ui->view($data['view'], $view);
+			$this->CI->ui->render();
+		}
+		else 
+		{
+			return $output;
 		}
 	}
 	
 	function _prepare_retrieve($data)
 	{
 		$default = array (
+			'id' => 0,
 			'model' => 'model',
 			'method' => 'get',
+			'view' => '',
+			'output' => array (),
 			'header' => array (),
-			'parser' => '',
 			'limit' => 30,
 			'offset' => 0,
 			'callback' => '',
@@ -193,9 +242,15 @@ class Scaffold {
 	function _prepare_editable($data)
 	{
 		$default = array (
+			'id' => 0,
 			'model' => 'model',
 			'method' => 'get',
+			'view' => '',
+			'output' => array (),
 			'fields' => array (),
+			'callback_fields' => '',
+			'data' => array(),
+			'callback_data' => '',
 			'prefix' => 'default',
 			'callback' => ''
 		);
