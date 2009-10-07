@@ -1,6 +1,6 @@
 <?php
 
-class Scaffold {
+class CRUD {
 	var $CI = NULL;
 	var $default_response = array (
 		'success' => FALSE,
@@ -13,11 +13,14 @@ class Scaffold {
 		'html' => ''
 	);
 	var $data = array (
-		'retrieve' => array (),
-		'editable' => array ()
+		'retriever' => array (),
+		'updater' => array (),
+		'remover' => array (),
+		'model' => '',
+		'segment' => ''
 	);
 	
-	function Scaffold()
+	function CRUD()
 	{
 		$this->CI =& get_instance();
 		
@@ -27,9 +30,9 @@ class Scaffold {
 			'Pagination'
 		));
 		
-		$this->CI->scaffold = $this;
+		$this->CI->CRUD = $this;
 		
-		log_message('debug', "Scaffold Class Initialized");
+		log_message('debug', "CRUD Class Initialized");
 	}
 	
 	function initialize($data = array ())
@@ -37,22 +40,24 @@ class Scaffold {
 		$this->data = array_merge($this->data, $data);
 		
 		$segment = trim($this->data['segment']);
-		$is_retrieve = array ('index', '', 'retrieve');
-		$is_editable = array ('editable', 'edit', 'add');
+		$is_retriever = array ('index', '', 'retriever', 'retrieve');
+		$is_updater = array ('updater', 'update', 'editable');
+		$is_remover = array ('remover', 'remove');
 		$send_to = '';
 		
 		if (isset($segment))
 		{
-			$send_to = (in_array($segment, $is_retrieve) ? 'retrieve' : $send_to);
-			$send_to = (in_array($segment, $is_editable) ? 'editable' : $send_to);
+			$send_to = (in_array($segment, $is_retriever) ? 'retriever' : $send_to);
+			$send_to = (in_array($segment, $is_updater) ? 'updater' : $send_to);
+			$send_to = (in_array($segment, $is_remover) ? 'remover' : $send_to);
 			
-			$this->run($send_to);
+			$this->generate($send_to);
 		}
 	}
 	
-	function run($type = 'retrieve')
+	function generate($type = 'retriever')
 	{
-		$allowed = array ('retrieve', 'editable', 'remove');
+		$allowed = array ('retriever', 'updater', 'remover');
 		$type = trim(strtolower($type));
 		
 		if ( !! in_array($type, $allowed))
@@ -61,12 +66,12 @@ class Scaffold {
 		}
 		else 
 		{
-			log_message('error', 'Scaffold: Unable to determine request ' . $type);
+			log_message('error', 'CRUD: Unable to determine request ' . $type);
 		}
 	}
-	function retrieve($data = array ())
+	function retriever($data = array ())
 	{
-		$data = $this->_prepare_retrieve($data);
+		$data = $this->_prepare_retriever($data);
 		
 		$datagrid = NULL;
 		$output = array (
@@ -110,12 +115,12 @@ class Scaffold {
 			}
 			else 
 			{
-				log_message('error', 'Scaffold: cannot locate method under Application model class');
+				log_message('error', 'CRUD: cannot locate method under Application model class');
 			}
 		}
 		else 
 		{
-			log_message('error', 'Scaffold: cannot locate Application model class');
+			log_message('error', 'CRUD: cannot locate Application model class');
 		}
 		
 		if ( !! method_exists($this->CI, $data['callback']))
@@ -124,11 +129,7 @@ class Scaffold {
 		}
 		elseif ( trim($data['view']) !== '')
 		{
-			$view = $data['output'];
-			$view = array_merge($data['output'], $output['html']);
-			
-			$this->CI->ui->view($data['view'], $view);
-			$this->CI->ui->render();
+			$this->_callback_viewer($output['html'], $data['output'], $data['view']);
 		}
 		else 
 		{
@@ -136,9 +137,9 @@ class Scaffold {
 		}
 		
 	}
-	function editable($data = array())
+	function updater($data = array())
 	{
-		$data = $this->_prepare_editable($data);
+		$data = $this->_prepare_updater($data);
 		$output = array (
 			'html' => array (
 				'form' => '',
@@ -175,7 +176,7 @@ class Scaffold {
 					}
 					else 
 					{
-						log_message('error', 'Scaffold: cannot locate method under Application model class');
+						log_message('error', 'CRUD: cannot locate method under Application model class');
 					}
 					
 					if ($output['response']['success'] === TRUE && trim($output['response']['redirect']) !== '')
@@ -199,7 +200,7 @@ class Scaffold {
 		}
 		else 
 		{
-			log_message('error', 'Scaffold: cannot locate Application model class');
+			log_message('error', 'CRUD: cannot locate Application model class');
 		}
 			
 		if ( !! method_exists($this->CI, $data['callback']))
@@ -208,11 +209,7 @@ class Scaffold {
 		}
 		elseif ( trim($data['view']) !== '')
 		{
-			$view = $data['output'];
-			$view = array_merge($data['output'], $output['html']);
-			
-			$this->CI->ui->view($data['view'], $view);
-			$this->CI->ui->render();
+			$this->_callback_viewer($output['html'], $data['output'], $data['view']);
 		}
 		else 
 		{
@@ -220,12 +217,65 @@ class Scaffold {
 		}
 	}
 	
-	function _prepare_retrieve($data)
+	function remover($data = array())
+	{
+		$data = $this->_prepare_remover($data);
+		$output = array (
+			'response' => $this->default_response
+		);
+		
+		if ( !! property_exists($this->CI, $data['model']))
+		{
+			
+			if ( !! method_exists($this->CI->{$data['model']}, $data['method']))
+			{
+				$output['response'] = $this->CI->{$data['model']}->{$data['method']}($result, $this->default_response);
+			}
+			else 
+			{
+				log_message('error', 'CRUD: cannot locate method under Application model class');
+			}
+					
+			if ($output['response']['success'] === TRUE && trim($output['response']['redirect']) !== '')
+			{
+				redirect($output['response']['redirect']);
+			} 						
+			elseif ($output['response']['success'] === FALSE) 
+			{
+				$output['html']['error'] = sprintf(
+					'<%s class="%s">%s</%s>',
+					$this->CI->form->template['error'],
+					$this->CI->form->template['error_class'],
+					$output['response']['error'],
+					$this->CI->form->template['error']
+				);
+			}
+		}
+		else 
+		{
+			log_message('error', 'CRUD: cannot locate Application model class');
+		}
+			
+		if ( !! method_exists($this->CI, $data['callback']))
+		{
+			$this->CI->{$data['callback']}($output);
+		}
+		elseif ( trim($data['view']) !== '')
+		{
+			$this->_callback_viewer($output['html'], $data['output'], $data['view']);
+		}
+		else 
+		{
+			return $output;
+		}
+	}
+	
+	function _prepare_retriever($data)
 	{
 		$default = array (
 			'id' => 0,
 			'model' => 'model',
-			'method' => 'get',
+			'method' => 'retriever',
 			'view' => '',
 			'output' => array (),
 			'header' => array (),
@@ -236,15 +286,22 @@ class Scaffold {
 			'suffix_url' => ''
 		);
 		
-		return $result = array_merge($default, $data);
+		$result = array_merge($default, $data);
+		
+		if ( trim($this->data['model']) !== '')
+		{
+			$result['model'] = $this->data['model'];
+		}
+		
+		return $result;
 	}
 	
-	function _prepare_editable($data)
+	function _prepare_updater($data)
 	{
 		$default = array (
 			'id' => 0,
 			'model' => 'model',
-			'method' => 'get',
+			'method' => 'fetcher',
 			'view' => '',
 			'output' => array (),
 			'fields' => array (),
@@ -255,7 +312,47 @@ class Scaffold {
 			'callback' => ''
 		);
 		
-		return $result = array_merge($default, $data);
+		$result = array_merge($default, $data);
+		
+		if ( trim($this->data['model']) !== '')
+		{
+			$result['model'] = $this->data['model'];
+		}
+		
+		return $result;
 	}
 	
+	function _prepare_remover($data)
+	{
+		$default = array (
+			'id' => 0,
+			'model' => 'model',
+			'method' => 'remover',
+			'callback' => '',
+			'output' => array (),
+			'view' => ''
+		);
+		
+		$result = array_merge($default, $data);
+		
+		if ( trim($this->data['model']) !== '')
+		{
+			$result['model'] = $this->data['model'];
+		}
+		
+		return $result;
+	}
+	
+	function _callback_viewer($scaffold, $output, $view)
+	{
+		$output = array_merge($output, $scaffold);
+		
+		if (isset($output['title']) && trim($output['title']) !== '')
+		{
+			$this->CI->ui->set_title($output['title']);
+		}
+		
+		$this->CI->ui->view($view, $output);
+		$this->CI->ui->render();
+	}
 }

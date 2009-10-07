@@ -31,6 +31,8 @@ class Form {
 		$this->CI->load->helper('form');
 		
 		$this->CI->form = $this;
+		
+		log_message('debug', "Form Class Initialized");
 	}
 	
 	function validation($valid = TRUE)
@@ -88,7 +90,7 @@ class Form {
 		}
 	}
 	
-	function generate($options = array(), $id = 'default')
+	function generate($options = array(), $id = 'default', $alt = array())
 	{
 		$this->vars($options, $id);
 		
@@ -129,7 +131,7 @@ class Form {
 				$output .= sprintf('<%s class="%s">', $template['field'], $template['field_class']);
 			}
 			
-			$value = $this->_pick_standard($name, $field);
+			$value = $this->_pick_standard($name, $field, $alt);
 			
 			switch ($type) {
 				case 'hidden' :
@@ -282,8 +284,12 @@ class Form {
 		return $result = array_merge($default, $field);
 	}
 	
-	function _pick_standard($name, $field)
+	function _pick_standard($name, $field, $alt)
 	{
+		if ( !! isset($alt[$field['id']]) && trim($alt[$field['id']])) 
+		{
+			$field['value'] = $alt[$field['id']];
+		}
 		
 		if ( ! isset($field['value']) || $field['value'] === NULL) 
 		{
