@@ -122,6 +122,11 @@ class Form {
 			
 			$name = $pre . $field['id'];
 			
+			if ($type === 'dropdown')
+			{
+				$type = 'select';
+			}
+			
 			
 			if ($type !== 'hidden')
 			{
