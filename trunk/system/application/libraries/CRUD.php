@@ -17,7 +17,8 @@ class CRUD {
 		'modify' => array (),
 		'delete' => array (),
 		'model' => '',
-		'segment' => ''
+		'segment' => '',
+		'404' => ''
 	);
 	
 	function CRUD()
@@ -83,6 +84,11 @@ class CRUD {
 			'total_rows' => 0
 		);
 		
+		if ( ! $data['is_accessible'])
+		{
+			return $this->_callback_404();
+		}
+		
 		if ( !! property_exists($this->CI, $data['model']))
 		{
 			if ( !! method_exists($this->CI->{$data['model']}, $data['method']))
@@ -147,6 +153,11 @@ class CRUD {
 			), 
 			'response' => $this->default_response
 		);
+		
+		if ( ! $data['is_accessible'])
+		{
+			return $this->_callback_404();
+		}
 		
 		if ( !! property_exists($this->CI, $data['model']))
 		{
@@ -223,6 +234,11 @@ class CRUD {
 		$output = array (
 			'response' => $this->default_response
 		);
+		
+		if ( ! $data['is_accessible'])
+		{
+			return $this->_callback_404();
+		}
 		
 		if ( !! property_exists($this->CI, $data['model']))
 		{
@@ -345,6 +361,21 @@ class CRUD {
 		
 		return array_merge($default, $data);
 	}
+	
+	function _callback_404()
+	{
+		if (trim($this->data['404']) === '')
+		{
+			show_404();
+		}
+		else
+		{
+			$this->ui->set_title('Module not accessible');
+			$this->ui->view($this->data['404']);
+			$this->ui->render();			
+		}
+	}
+	
 	
 	function _callback_viewer($scaffold, $output, $view)
 	{
