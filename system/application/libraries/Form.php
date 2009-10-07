@@ -100,13 +100,15 @@ class Form {
 		$pre = $id . '_';
 		
 		$hidden = array ();
-		$output = '<'. $template['fieldset'] . ' class="' . $template['fieldset_class'] . '">';
+		$output = sprintf('<%s class="%s">', $template['fieldset'], $template['fieldset_class']);
 		
 		foreach ($fields as $field) 
 		{
 			$field = $this->_prepare_field($field);
 			$name = $pre . $field['id'];
-			$this->CI->form_validation->set_rules($name, $field['name'], $field['rule']);
+			
+			$rule = str_replace('matches[', 'matches['.$pre, $field['rule']);
+			$this->CI->form_validation->set_rules($name, $field['name'], $rule);
 		}
 		
 		$run = $this->CI->form_validation->run();
@@ -122,9 +124,9 @@ class Form {
 			if ($type !== 'hidden')
 			{
 				
-				$output .= '<' . $template['group']. ' id="tr_' . $name . '" class="'. $template['group_class'] . '">';
-				$output .= '<'. $template['label'] . ' class="'. $template['label_class'] . '">' . $field['name'] . '</'. $template['label'] . '>';
-				$output .= '<' . $template['field']. ' class="'. $template['field_class'] . '">';
+				$output .= sprintf('<%s id="tr_%s" class="%s">', $template['group'], $name, $template['group_class']);
+				$output .= sprintf('<%s class="%s">%s</%s>', $template['label'], $template['label_class'], $field['name'], $template['label']);
+				$output .= sprintf('<%s class="%s">', $template['field'], $template['field_class']);
 			}
 			
 			$value = $this->_pick_standard($name, $field);
@@ -235,17 +237,21 @@ class Form {
 				
 				if ( ! in_array($type, array('checkbox', 'radio'))) 
 				{
-					$output .= '<em>' . $field['desc'] . '</em>';
-					$output .= form_error($name, '<' . $this->template['error'] . ' class="' . $this->template['error_class'] . '">', '</' . $this->template['error'] .'>');
+					$output .= sprintf('<em>%s</em>',  $field['desc']);
+					$output .= form_error(
+						$name, 
+						sprintf('<%s class="%s">', $this->template['error'], $this->template['error_class']), 
+						sprintf('</%s>', $this->template['error'])
+					);
 				}
 				
 				
 			}
 			
-			$output .= '</' . $template['field']. '></' . $template['group']. '>';
+			$output .= sprintf('</%s></%s>', $template['field'], $template['group']);
 		}
 		
-		$output .= '</' . $template['fieldset'] . '>';
+		$output .= sprintf('</%s>', $template['fieldset']);
 		
 		if ($run == FALSE)
 		{
