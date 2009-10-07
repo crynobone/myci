@@ -55,7 +55,7 @@ class Form {
 		
 		foreach ($fields as $field)
 		{
-			$field = $this->_tune_field($field);
+			$field = $this->_prepare_field($field);
 			$type = strtolower($field['type']);
 			
 			if ($type === 'checkbox')
@@ -104,7 +104,7 @@ class Form {
 		
 		foreach ($fields as $field) 
 		{
-			$field = $this->_tune_field($field);
+			$field = $this->_prepare_field($field);
 			$name = $pre . $field['id'];
 			$this->CI->form_validation->set_rules($name, $field['name'], $field['rule']);
 		}
@@ -113,7 +113,7 @@ class Form {
 		
 		foreach ($fields as $field) 
 		{
-			$field = $this->_tune_field($field);
+			$field = $this->_prepare_field($field);
 			$type = strtolower($field['type']);
 			
 			$name = $pre . $field['id'];
@@ -257,7 +257,7 @@ class Form {
 		return form_hidden($hidden) . $output;
 	}
 	
-	function _tune_field($field = array())
+	function _prepare_field($field = array())
 	{
 		$default = array(
 			"name" => "",
