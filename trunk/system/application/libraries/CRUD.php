@@ -301,7 +301,7 @@ class CRUD {
 		$default = array (
 			'id' => 0,
 			'model' => 'model',
-			'method' => 'fetcher',
+			'method' => 'updater',
 			'view' => '',
 			'output' => array (),
 			'fields' => array (),
