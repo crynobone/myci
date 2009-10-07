@@ -1,12 +1,12 @@
 <?php if(!defined('BASEPATH')) exit('No direct script access allowed');
 
-class Acl {
+class ACL {
 	var $CI = NULL;
 	var $config = array ();
 	var $modules = array ();
 	var $access_type = array ('NONE', 'READ', 'WRITE', 'MODIFY', 'DELETE');
 	
-	function Acl()
+	function ACL()
 	{
 		$this->CI =& get_instance();
 		
@@ -15,7 +15,7 @@ class Acl {
 		
 		$this->_fetch_modules();
 		
-		$this->CI->acl = $this;
+		$this->CI->ACL = $this;
 	}
 	
 	function register_module($module_name = '')
