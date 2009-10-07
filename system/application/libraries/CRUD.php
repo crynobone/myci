@@ -13,9 +13,9 @@ class CRUD {
 		'html' => ''
 	);
 	var $data = array (
-		'retriever' => array (),
-		'updater' => array (),
-		'remover' => array (),
+		'read' => array (),
+		'modify' => array (),
+		'delete' => array (),
 		'model' => '',
 		'segment' => ''
 	);
@@ -40,24 +40,24 @@ class CRUD {
 		$this->data = array_merge($this->data, $data);
 		
 		$segment = trim($this->data['segment']);
-		$is_retriever = array ('index', '', 'retriever', 'retrieve');
-		$is_updater = array ('updater', 'update', 'editable');
-		$is_remover = array ('remover', 'remove');
+		$is_read = array ('read', 'index', '');
+		$is_modify = array ('modify', 'update', 'write');
+		$is_delete = array ('delete', 'remove');
 		$send_to = '';
 		
 		if (isset($segment))
 		{
-			$send_to = (in_array($segment, $is_retriever) ? 'retriever' : $send_to);
-			$send_to = (in_array($segment, $is_updater) ? 'updater' : $send_to);
-			$send_to = (in_array($segment, $is_remover) ? 'remover' : $send_to);
+			$send_to = (in_array($segment, $is_read) ? 'read' : $send_to);
+			$send_to = (in_array($segment, $is_modify) ? 'modify' : $send_to);
+			$send_to = (in_array($segment, $is_delete) ? 'delete' : $send_to);
 			
 			$this->generate($send_to);
 		}
 	}
 	
-	function generate($type = 'retriever')
+	function generate($type = 'read')
 	{
-		$allowed = array ('retriever', 'updater', 'remover');
+		$allowed = array ('read', 'modify', 'delete');
 		$type = trim(strtolower($type));
 		
 		if ( !! in_array($type, $allowed))
@@ -69,9 +69,9 @@ class CRUD {
 			log_message('error', 'CRUD: Unable to determine request ' . $type);
 		}
 	}
-	function retriever($data = array ())
+	function read($data = array ())
 	{
-		$data = $this->_prepare_retriever($data);
+		$data = $this->_prepare_read($data);
 		
 		$datagrid = NULL;
 		$output = array (
@@ -137,9 +137,9 @@ class CRUD {
 		}
 		
 	}
-	function updater($data = array())
+	function modify($data = array())
 	{
-		$data = $this->_prepare_updater($data);
+		$data = $this->_prepare_modify($data);
 		$output = array (
 			'html' => array (
 				'form' => '',
@@ -217,9 +217,9 @@ class CRUD {
 		}
 	}
 	
-	function remover($data = array())
+	function delete($data = array())
 	{
-		$data = $this->_prepare_remover($data);
+		$data = $this->_prepare_delete($data);
 		$output = array (
 			'response' => $this->default_response
 		);
@@ -270,77 +270,80 @@ class CRUD {
 		}
 	}
 	
-	function _prepare_retriever($data)
+	function _prepare_read($data)
 	{
+		$model = 'model';
+		
+		if ( trim($this->data['model']) !== '')
+		{
+			$model = $this->data['model'];
+		}
+		
 		$default = array (
-			'id' => 0,
-			'model' => 'model',
-			'method' => 'retriever',
-			'view' => '',
-			'output' => array (),
+			'model' => $model,
+			'method' => 'read',
 			'header' => array (),
 			'limit' => 30,
 			'offset' => 0,
 			'callback' => '',
 			'base_url' => current_url(),
-			'suffix_url' => ''
+			'suffix_url' => '',
+			'output' => array (),
+			'view' => '',
+			'is_accesible' => TRUE
 		);
 		
-		$result = array_merge($default, $data);
+		return array_merge($default, $data);
+		
+	}
+	
+	function _prepare_modify($data)
+	{
+		$model = 'model';
 		
 		if ( trim($this->data['model']) !== '')
 		{
-			$result['model'] = $this->data['model'];
+			$model = $this->data['model'];
 		}
 		
-		return $result;
-	}
-	
-	function _prepare_updater($data)
-	{
 		$default = array (
 			'id' => 0,
-			'model' => 'model',
-			'method' => 'updater',
-			'view' => '',
-			'output' => array (),
+			'model' => $model,
+			'method' => 'modify',
 			'fields' => array (),
 			'callback_fields' => '',
 			'data' => array(),
 			'callback_data' => '',
 			'prefix' => 'default',
-			'callback' => ''
-		);
-		
-		$result = array_merge($default, $data);
-		
-		if ( trim($this->data['model']) !== '')
-		{
-			$result['model'] = $this->data['model'];
-		}
-		
-		return $result;
-	}
-	
-	function _prepare_remover($data)
-	{
-		$default = array (
-			'id' => 0,
-			'model' => 'model',
-			'method' => 'remover',
 			'callback' => '',
 			'output' => array (),
-			'view' => ''
+			'view' => '',
+			'is_accesible' => TRUE
 		);
 		
-		$result = array_merge($default, $data);
+		return array_merge($default, $data);
+	}
+	
+	function _prepare_delete($data)
+	{
+		$model = 'model';
 		
 		if ( trim($this->data['model']) !== '')
 		{
-			$result['model'] = $this->data['model'];
+			$model = $this->data['model'];
 		}
 		
-		return $result;
+		$default = array (
+			'id' => 0,
+			'model' => $model,
+			'method' => 'delete',
+			'callback' => '',
+			'output' => array (),
+			'view' => '',
+			'is_accesible' => TRUE
+		);
+		
+		return array_merge($default, $data);
 	}
 	
 	function _callback_viewer($scaffold, $output, $view)
