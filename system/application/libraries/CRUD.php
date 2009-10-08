@@ -17,7 +17,14 @@ class CRUD {
 		'modify' => array (),
 		'delete' => array (),
 		'model' => '',
-		'segment' => '',
+		'segment' => 3,
+		'segment_id' => 4,
+		'segment_xhr' => 5,
+		'enabled' => array (
+			'read' => TRUE,
+			'modify' => TRUE,
+			'delete' => TRUE
+		),
 		'404' => ''
 	);
 	
@@ -84,7 +91,7 @@ class CRUD {
 			'total_rows' => 0
 		);
 		
-		if ( ! $data['is_accessible'])
+		if ( ! $data['is_accessible'] && !! $this->data['enabled']['read'])
 		{
 			return $this->_callback_404();
 		}
@@ -129,7 +136,11 @@ class CRUD {
 			log_message('error', 'CRUD: cannot locate Application model class');
 		}
 		
-		if ( !! method_exists($this->CI, $data['callback']))
+		if ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
+		{
+			$this->CI->{$data['callback_xhr']}($output);
+		}
+		elseif ( !! method_exists($this->CI, $data['callback']))
 		{
 			$this->CI->{$data['callback']}($output);
 		}
@@ -154,7 +165,7 @@ class CRUD {
 			'response' => $this->default_response
 		);
 		
-		if ( ! $data['is_accessible'])
+		if ( ! $data['is_accessible'] && !! $this->data['enabled']['modify'])
 		{
 			return $this->_callback_404();
 		}
@@ -214,7 +225,11 @@ class CRUD {
 			log_message('error', 'CRUD: cannot locate Application model class');
 		}
 			
-		if ( !! method_exists($this->CI, $data['callback']))
+		if ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
+		{
+			$this->CI->{$data['callback_xhr']}($output);
+		}
+		elseif ( !! method_exists($this->CI, $data['callback']))
 		{
 			$this->CI->{$data['callback']}($output);
 		}
@@ -235,7 +250,7 @@ class CRUD {
 			'response' => $this->default_response
 		);
 		
-		if ( ! $data['is_accessible'])
+		if ( ! $data['is_accessible'] && !! $this->data['enabled']['delete'])
 		{
 			return $this->_callback_404();
 		}
@@ -272,7 +287,11 @@ class CRUD {
 			log_message('error', 'CRUD: cannot locate Application model class');
 		}
 			
-		if ( !! method_exists($this->CI, $data['callback']))
+		if ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
+		{
+			$this->CI->{$data['callback_xhr']}($output);
+		}
+		elseif ( !! method_exists($this->CI, $data['callback']))
 		{
 			$this->CI->{$data['callback']}($output);
 		}
@@ -298,16 +317,22 @@ class CRUD {
 		$default = array (
 			'model' => $model,
 			'method' => 'read',
+			'callback' => '',
+			'callback_xhr' => '',
 			'header' => array (),
 			'limit' => 30,
 			'offset' => 0,
-			'callback' => '',
 			'base_url' => current_url(),
 			'suffix_url' => '',
 			'output' => array (),
 			'view' => '',
 			'is_accesible' => TRUE
 		);
+		
+		if ( ! isset($data['offset']) && $this->data['segment_id'] > 0)
+		{
+			$data['offset'] = $this->CI->uri->segment($this->data['segment_id'], 0);
+		}
 		
 		return array_merge($default, $data);
 		
@@ -326,16 +351,22 @@ class CRUD {
 			'id' => 0,
 			'model' => $model,
 			'method' => 'modify',
+			'callback' => '',
+			'callback_xhr' => '',
+			'prefix' => 'default',
 			'fields' => array (),
 			'callback_fields' => '',
 			'data' => array(),
 			'callback_data' => '',
-			'prefix' => 'default',
-			'callback' => '',
 			'output' => array (),
 			'view' => '',
 			'is_accesible' => TRUE
 		);
+		
+		if ( ! isset($data['id']) && $this->data['segment_id'] > 0)
+		{
+			$data['id'] = $this->CI->uri->segment($this->data['segment_id'], 0);
+		}
 		
 		return array_merge($default, $data);
 	}
@@ -354,10 +385,16 @@ class CRUD {
 			'model' => $model,
 			'method' => 'delete',
 			'callback' => '',
+			'callback_xhr' => '',
 			'output' => array (),
 			'view' => '',
 			'is_accesible' => TRUE
 		);
+		
+		if ( ! isset($data['id']) && $this->data['segment_id'] > 0)
+		{
+			$data['id'] = $this->CI->uri->segment($this->data['segment_id'], 0);
+		}
 		
 		return array_merge($default, $data);
 	}
