@@ -407,9 +407,16 @@ class CRUD {
 		}
 		else
 		{
-			$this->ui->set_title('Module not accessible');
-			$this->ui->view($this->data['404']);
-			$this->ui->render();			
+			if ( !! method_exists($this->CI, 'ui')) 
+			{
+				$this->CI->ui->set_title('Module not accessible');
+				$this->CI->ui->view($this->data['404']);
+				$this->CI->ui->render();
+			}
+			else 
+			{
+				$this->CI->load->view($this->data['404']);
+			}
 		}
 	}
 	
@@ -418,12 +425,19 @@ class CRUD {
 	{
 		$output = array_merge($output, $scaffold);
 		
-		if (isset($output['title']) && trim($output['title']) !== '')
+		if ( !! method_exists($this->CI, 'ui')) 
 		{
-			$this->CI->ui->set_title($output['title']);
+			if (isset($output['title']) && trim($output['title']) !== '')
+			{
+				$this->CI->ui->set_title($output['title']);
+			}
+			
+			$this->CI->ui->view($view, $output);
+			$this->CI->ui->render();
 		}
-		
-		$this->CI->ui->view($view, $output);
-		$this->CI->ui->render();
+		else 
+		{
+			$this->CI->load->view($view, $output);
+		}
 	}
 }
