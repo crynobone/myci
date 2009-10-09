@@ -47,7 +47,7 @@ class CRUD {
 	{
 		$this->data = array_merge($this->data, $data);
 		
-		$segment = trim($this->data['segment']);
+		$segment = $this->CI->uri->segment($this->data['segment'], '');
 		$is_read = array ('read', 'index', '');
 		$is_modify = array ('modify', 'update', 'write');
 		$is_delete = array ('delete', 'remove');
