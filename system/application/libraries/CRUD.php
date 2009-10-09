@@ -20,11 +20,9 @@ class CRUD {
 		'segment' => 3,
 		'segment_id' => 4,
 		'segment_xhr' => 5,
-		'enabled' => array (
-			'read' => TRUE,
-			'modify' => TRUE,
-			'delete' => TRUE
-		),
+		'enable_read' => TRUE,
+		'enable_modify' => TRUE,
+		'enable_delete' => TRUE,
 		'404' => ''
 	);
 	
@@ -91,7 +89,7 @@ class CRUD {
 			'total_rows' => 0
 		);
 		
-		if ( ! $data['is_accessible'] && !! $this->data['enabled']['read'])
+		if ( ! $data['is_accessible'] && !! $this->data['enable_read'])
 		{
 			return $this->_callback_404();
 		}
@@ -154,6 +152,12 @@ class CRUD {
 		}
 		
 	}
+	
+	function form($data = array())
+	{
+		$this->modify($data);
+	}
+	
 	function modify($data = array())
 	{
 		$data = $this->_prepare_modify($data);
@@ -165,23 +169,23 @@ class CRUD {
 			'response' => $this->default_response
 		);
 		
-		if ( ! $data['is_accessible'] && !! $this->data['enabled']['modify'])
+		$form_template = $data['form_template'];
+		
+		if (is_array($form_template) && count($form_template))
+		{
+			$this->CI->form->set_template($form_template);
+		}
+		
+		
+		if ( ! $data['is_accessible'] && !! $this->data['enable_modify'])
 		{
 			return $this->_callback_404();
 		}
 		
 		if ( !! property_exists($this->CI, $data['model']))
 		{
-			
-			if (trim($data['callback_fields']) !== '' && method_exists($this->CI->{$data['model']}, $data['callback_fields']))
-			{
-				$data['fields'] = $this->CI->{$data['model']}->{$data['callback_fields']}($data['id']);
-			}
-			
-			if (trim($data['callback_data']) !== '' && method_exists($this->CI->{$data['model']}, $data['callback_data']))
-			{
-				$data['data'] = $this->CI->{$data['model']}->{$data['callback_data']}($data['id']);
-			}
+			$data['fields'] = $this->_organizer($data, 'fields');
+			$data['data'] = $this->_organizer($data, 'data');
 			
 			if (is_array($data['fields']) && count($data['fields']) > 0)
 			{
@@ -225,17 +229,17 @@ class CRUD {
 			log_message('error', 'CRUD: cannot locate Application model class');
 		}
 			
-		if ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
+		if ( trim($data['view']) !== '')
 		{
-			$this->CI->{$data['callback_xhr']}($output);
+			$this->_callback_viewer($output['html'], $data['output'], $data['view']);
 		}
 		elseif ( !! method_exists($this->CI, $data['callback']))
 		{
 			$this->CI->{$data['callback']}($output);
 		}
-		elseif ( trim($data['view']) !== '')
+		elseif ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
 		{
-			$this->_callback_viewer($output['html'], $data['output'], $data['view']);
+			$this->CI->{$data['callback_xhr']}($output);
 		}
 		else 
 		{
@@ -287,17 +291,17 @@ class CRUD {
 			log_message('error', 'CRUD: cannot locate Application model class');
 		}
 			
-		if ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
+		if ( trim($data['view']) !== '')
 		{
-			$this->CI->{$data['callback_xhr']}($output);
+			$this->_callback_viewer($output['html'], $data['output'], $data['view']);
 		}
 		elseif ( !! method_exists($this->CI, $data['callback']))
 		{
 			$this->CI->{$data['callback']}($output);
 		}
-		elseif ( trim($data['view']) !== '')
+		elseif ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
 		{
-			$this->_callback_viewer($output['html'], $data['output'], $data['view']);
+			$this->CI->{$data['callback_xhr']}($output);
 		}
 		else 
 		{
@@ -326,7 +330,7 @@ class CRUD {
 			'suffix_url' => '',
 			'output' => array (),
 			'view' => '',
-			'is_accesible' => TRUE
+			'is_accessible' => TRUE
 		);
 		
 		if ( ! isset($data['offset']) && $this->data['segment_id'] > 0)
@@ -354,13 +358,14 @@ class CRUD {
 			'callback' => '',
 			'callback_xhr' => '',
 			'prefix' => 'default',
+			'form_template' => array(),
 			'fields' => array (),
 			'callback_fields' => '',
 			'data' => array(),
 			'callback_data' => '',
 			'output' => array (),
 			'view' => '',
-			'is_accesible' => TRUE
+			'is_accessible' => TRUE
 		);
 		
 		if ( ! isset($data['id']) && $this->data['segment_id'] > 0)
@@ -388,7 +393,7 @@ class CRUD {
 			'callback_xhr' => '',
 			'output' => array (),
 			'view' => '',
-			'is_accesible' => TRUE
+			'is_accessible' => TRUE
 		);
 		
 		if ( ! isset($data['id']) && $this->data['segment_id'] > 0)
@@ -399,6 +404,25 @@ class CRUD {
 		return array_merge($default, $data);
 	}
 	
+	function _organizer($data, $prefix)
+	{
+		$output = $data[$prefix];
+		
+		if ( !! is_string($output) && trim($output) !== '')
+		{
+			if ( !!  method_exists($this->CI->{$data['model']}, $output))
+			{
+				$output = $this->CI->{$data['model']}->{$output}($data['id']);
+			}
+			elseif ( !! property_exists($this->CI->{$data['model']}, $output))
+			{
+				$output = $this->CI->{$data['model']}->{$output};
+			}
+		}
+		
+		return $output;
+	}
+	
 	function _callback_404()
 	{
 		if (trim($this->data['404']) === '')
@@ -407,7 +431,7 @@ class CRUD {
 		}
 		else
 		{
-			if ( !! method_exists($this->CI, 'ui')) 
+			if ( !! property_exists($this->CI, 'ui')) 
 			{
 				$this->CI->ui->set_title('Module not accessible');
 				$this->CI->ui->view($this->data['404']);
@@ -420,12 +444,11 @@ class CRUD {
 		}
 	}
 	
-	
 	function _callback_viewer($scaffold, $output, $view)
 	{
 		$output = array_merge($output, $scaffold);
 		
-		if ( !! method_exists($this->CI, 'ui')) 
+		if ( !! property_exists($this->CI, 'ui')) 
 		{
 			if (isset($output['title']) && trim($output['title']) !== '')
 			{
