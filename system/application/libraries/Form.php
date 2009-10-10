@@ -3,6 +3,7 @@
 class Form {
 	var $CI = NULL;
 	var $fields = array ();
+	var $output = array ();
 	var $validate = TRUE;
 	var $data = array ();
 	var $full_data = array ();
@@ -102,7 +103,7 @@ class Form {
 		$pre = $id . '_';
 		
 		$hidden = array ();
-		$output = sprintf('<%s class="%s">', $template['fieldset'], $template['fieldset_class']);
+		$final_html = sprintf('<%s class="%s">', $template['fieldset'], $template['fieldset_class']);
 		
 		foreach ($fields as $field) 
 		{
@@ -117,6 +118,8 @@ class Form {
 		
 		foreach ($fields as $field) 
 		{
+			$html = '';
+			
 			$field = $this->_prepare_field($field);
 			$type = strtolower($field['type']);
 			
@@ -131,9 +134,9 @@ class Form {
 			if ($type !== 'hidden')
 			{
 				
-				$output .= sprintf('<%s id="tr_%s" class="%s">', $template['group'], $name, $template['group_class']);
-				$output .= sprintf('<%s class="%s">%s</%s>', $template['label'], $template['label_class'], $field['name'], $template['label']);
-				$output .= sprintf('<%s class="%s">', $template['field'], $template['field_class']);
+				$html .= sprintf('<%s id="tr_%s" class="%s">', $template['group'], $name, $template['group_class']);
+				$html .= sprintf('<%s class="%s">%s</%s>', $template['label'], $template['label_class'], $field['name'], $template['label']);
+				$html .= sprintf('<%s class="%s">', $template['field'], $template['field_class']);
 			}
 			
 			$value = $this->_pick_standard($name, $field, $alt);
@@ -143,7 +146,7 @@ class Form {
 					$hidden[$name] = $value;
 					break;
 				case 'password' :
-					$output .= form_password(array (
+					$html .= form_password(array (
 						'name' => $name,
 						'id' => $name,
 						'value' => form_prep($value),
@@ -152,7 +155,7 @@ class Form {
 					));
 					break;
 				case 'upload' :
-					$output .= form_upload(array (
+					$html .= form_upload(array (
 						'name' => $name,
 						'id' => $name,
 						'value' => form_prep($value),
@@ -160,7 +163,7 @@ class Form {
 					));
 					break;
 				case 'textarea' :
-					$output .= form_textarea(array (
+					$html .= form_textarea(array (
 						'name' => $name,
 						'id' => $name,
 						'value' => form_prep($value),
@@ -170,7 +173,7 @@ class Form {
 					));
 					break;
 				case 'select' :
-					$output .= form_dropdown(
+					$html .= form_dropdown(
 						$name,
 						$field['options'],
 						$value,
@@ -189,14 +192,14 @@ class Form {
 							$output .= '<br />';
 						}
 						
-						$output .= form_radio(array (
+						$html .= form_radio(array (
 							'id' => $radio_name,
 							'name' => $name,
 							'value' => form_prep($key),
 							'checked' => ($value == $key ? TRUE : FALSE),
 							'class' => $field['class']
 						));
-						$output .= form_label($val, $radio_name);
+						$html .= form_label($val, $radio_name);
 						
 						$i++;
 					}
@@ -204,7 +207,7 @@ class Form {
 					break;
 					
 				case 'custom' :
-					$output .= $field['html'];
+					$html .= $field['html'];
 					break;
 				case 'checkbox' :
 					
@@ -215,17 +218,17 @@ class Form {
 						$checked = TRUE;
 					}
 					
-					$output .= form_checkbox(array (
+					$html .= form_checkbox(array (
 						'id' => $name,
 						'name' => $name,
 						'value' => form_prep($value),
 						'checked' => $checked,
 						'class' => $field['class']
 					));
-					$output .= form_label($field['desc'], $name);
+					$html .= form_label($field['desc'], $name);
 					break;
 				default :
-					$output .= form_input(array (
+					$html .= form_input(array (
 						'name' => $name,
 						'id' => $name,
 						'value' => form_prep($value),
@@ -239,13 +242,13 @@ class Form {
 			{
 				if ($type !== 'custom' && trim($field['html']) !== '')
 				{
-					$output .= $field['html'];
+					$html .= $field['html'];
 				}
 				
 				if ( ! in_array($type, array('checkbox', 'radio'))) 
 				{
-					$output .= sprintf('<em>%s</em>',  $field['desc']);
-					$output .= form_error(
+					$html .= sprintf('<em>%s</em>',  $field['desc']);
+					$html .= form_error(
 						$name, 
 						sprintf('<%s class="%s">', $this->template['error'], $this->template['error_class']), 
 						sprintf('</%s>', $this->template['error'])
@@ -255,10 +258,13 @@ class Form {
 				
 			}
 			
-			$output .= sprintf('</%s></%s>', $template['field'], $template['group']);
+			$html .= sprintf('</%s></%s>', $template['field'], $template['group']);
+			
+			$this->output[$name] = $html;
+			$final_html .= $html;
 		}
 		
-		$output .= sprintf('</%s>', $template['fieldset']);
+		$final_html .= sprintf('</%s>', $template['fieldset']);
 		
 		if ($run == FALSE)
 		{
@@ -267,7 +273,7 @@ class Form {
 		
 		$this->result[$id] = $run;
 		
-		return form_hidden($hidden) . $output;
+		return form_hidden($hidden) . $final_html;
 	}
 	
 	function _prepare_field($field = array())
