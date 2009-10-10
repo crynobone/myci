@@ -22,6 +22,7 @@ class Form {
 	
 	// form data
 	var $fields = array ();
+	var $value = array ();
 	var $data = array ();
 	var $full_data = array ();
 	
@@ -174,7 +175,12 @@ class Form {
 			$this->output[$id] = array ();
 		}
 		
-		$hidden = array ();
+		if ( ! isset($this->value[$id]))
+		{
+			$this->value[$id] = array ();
+		}
+		
+		$hidden_html = '';
 		$final_html = sprintf('<%s class="%s">', $template['fieldset'], $template['fieldset_class']);
 		
 		// configure form validation rules
@@ -192,6 +198,7 @@ class Form {
 		
 		foreach ($fields as $field) 
 		{
+			$hidden = '';
 			$html = '';
 			
 			// each field need to have minimum set of data to avoid PHP errors, in case you didn't add
@@ -221,7 +228,7 @@ class Form {
 			// check form field type
 			switch ($type) {
 				case 'hidden' :
-					$hidden[$name] = $value;
+					$hidden .= form_hidden($name, $value);
 					break;
 				case 'password' :
 					$html .= form_password(array (
@@ -339,8 +346,18 @@ class Form {
 			
 			$html .= sprintf('</%s></%s>', $template['field'], $template['group']);
 			
-			$this->output[$id][$field['id']] = $html;
-			$final_html .= $html;
+			if ( ! in_array($type, array('hidden')))
+			{
+				$this->output[$id][$field['id']] = $html;
+				$final_html .= $html;
+			}
+			else 
+			{
+				$this->output[$id][$field['id']] = $hidden;
+				$hidden_html .= $hidden;
+			}
+			
+			$this->value[$id][$field['id']] = $value;
 		}
 		
 		$final_html .= sprintf('</%s>', $template['fieldset']);
@@ -352,7 +369,7 @@ class Form {
 		
 		$this->result[$id] = $run;
 		
-		return form_hidden($hidden) . $final_html;
+		return $hidden_html . $final_html;
 	}
 	
 	/**
@@ -368,6 +385,7 @@ class Form {
 			"id" => "",
 			"standard" => "",
 			"type" => "text",
+			"options" => array(),
 			"class" => "",
 			"html" => "",
 			"maxlength" => "",
@@ -388,7 +406,7 @@ class Form {
 	 */
 	function _pick_standard($name, $field, $alt)
 	{
-		if ( !! isset($alt[$field['id']]) && trim($alt[$field['id']])) 
+		if ( !! isset($alt[$field['id']]) && trim($alt[$field['id']]) !== '') 
 		{
 			$field['value'] = $alt[$field['id']];
 		}
