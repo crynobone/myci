@@ -138,14 +138,14 @@ class Authentication
 
         set_cookie($cookie);
     }
-    function register( $id = 0, $name = 'guest', $password = '', $role = 0 )
+    function register($id = 0, $name = 'guest', $password = '', $role = 0, $remember_me = FALSE)
     {
     	$value = $id . "|" . md5($name . $password) . "|" . $role;
         
 		$cookie = array (
 	        'name' => $this->config['cookie'],
 	        'value' => $value,
-	        'expire' => $this->_cookie_timeout()
+	        'expire' => $this->_cookie_timeout($remember_me)
         );
 
         set_cookie($cookie);
@@ -154,9 +154,9 @@ class Authentication
     {
         delete_cookie($this->config['cookie']);
     }
-	function _cookie_timeout()
+	function _cookie_timeout($remember_me = FALSE)
 	{
-		if ($this->config['expire'] > 0)
+		if ($this->config['expire'] > 0 && ! $remember_me)
 		{
 			return (int)$this->config['expire'] + time();
 		}
@@ -166,4 +166,3 @@ class Authentication
 		}
 	}
 }
-
