@@ -164,6 +164,7 @@ class CRUD {
 		$output = array (
 			'html' => array (
 				'form' => '',
+				'fields' => array (),
 				'error' => ''
 			), 
 			'response' => $this->default_response
@@ -190,6 +191,7 @@ class CRUD {
 			if (is_array($data['fields']) && count($data['fields']) > 0)
 			{
 				$output['html']['form'] = $this->CI->form->generate($data['fields'], $data['prefix'], $data['data']);
+				$output['html']['fields'] = $this->CI->form->output[$data['prefix']];
 				
 				if ( !! $this->CI->form->run($data['prefix']))
 				{
