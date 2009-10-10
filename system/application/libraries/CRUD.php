@@ -57,7 +57,14 @@ class CRUD {
 			$send_to = (in_array($segment, $is_modify) ? 'modify' : $send_to);
 			$send_to = (in_array($segment, $is_delete) ? 'delete' : $send_to);
 			
-			$this->generate($send_to);
+			if ($send_to != '')
+			{
+				$this->generate($send_to);
+			}
+			else 
+			{
+				$this->CI->$segment();
+			}
 		}
 	}
 	
@@ -155,7 +162,7 @@ class CRUD {
 	
 	function form($data = array())
 	{
-		$this->modify($data);
+		return $this->modify($data);
 	}
 	
 	function modify($data = array())
@@ -165,7 +172,8 @@ class CRUD {
 			'html' => array (
 				'form' => '',
 				'fields' => array (),
-				'error' => ''
+				'error' => '',
+				'value' => array ()
 			), 
 			'response' => $this->default_response
 		);
@@ -192,11 +200,13 @@ class CRUD {
 			{
 				$output['html']['form'] = $this->CI->form->generate($data['fields'], $data['prefix'], $data['data']);
 				$output['html']['fields'] = $this->CI->form->output[$data['prefix']];
+				$output['html']['value'] =  $this->CI->form->value[$data['prefix']];
 				
 				if ( !! $this->CI->form->run($data['prefix']))
 				{
 					$result = $this->CI->form->result($data['prefix']);
 					
+					$data['result'] = $result;
 					
 					if ( !! method_exists($this->CI->{$data['model']}, $data['method']))
 					{
@@ -362,9 +372,7 @@ class CRUD {
 			'prefix' => 'default',
 			'form_template' => array(),
 			'fields' => array (),
-			'callback_fields' => '',
 			'data' => array(),
-			'callback_data' => '',
 			'output' => array (),
 			'view' => '',
 			'is_accessible' => TRUE
@@ -419,6 +427,9 @@ class CRUD {
 			elseif ( !! property_exists($this->CI->{$data['model']}, $output))
 			{
 				$output = $this->CI->{$data['model']}->{$output};
+			}
+			else {
+				$output = array ();
 			}
 		}
 		
