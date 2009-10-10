@@ -102,6 +102,11 @@ class Form {
 		$this->post($fields, $id);
 		$pre = $id . '_';
 		
+		if ( ! isset($this->output[$pre]))
+		{
+			$this->output[$pre] = array ();
+		}
+		
 		$hidden = array ();
 		$final_html = sprintf('<%s class="%s">', $template['fieldset'], $template['fieldset_class']);
 		
@@ -260,7 +265,7 @@ class Form {
 			
 			$html .= sprintf('</%s></%s>', $template['field'], $template['group']);
 			
-			$this->output[$name] = $html;
+			$this->output[$pre][$field['id']] = $html;
 			$final_html .= $html;
 		}
 		
