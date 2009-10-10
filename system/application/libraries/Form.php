@@ -1,15 +1,36 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
+/**
+ * Form Generator for CodeIgniter
+ *
+ * PHP version 5
+ *
+ * @category  CodeIgniter
+ * @package   Form CI
+ * @author    Mior Muhammad Zaki (hello@crynobone.com)
+ * @version   0.1
+ * Copyright (c) 2009 Mior Muhammad Zaki  (http://crynobone.com)
+ * Licensed under the MIT.
+*/
+
 class Form {
+	// CI singleton
 	var $CI = NULL;
-	var $fields = array ();
+	
+	// form output
 	var $output = array ();
-	var $validate = TRUE;
+	
+	// form data
+	var $fields = array ();
 	var $data = array ();
 	var $full_data = array ();
+	
+	// validation result
+	var $validate = TRUE;
 	var $result = array ();
 	var $success = TRUE;
 	
+	// default template
 	var $template = array (
 		'fieldset' => 'fieldset',
 		'fieldset_class' => '',
@@ -23,19 +44,34 @@ class Form {
 		'error_class' => 'errorbox'
 	);
 	
+	/**
+	 * Constructor 
+	 * 
+	 * @access 		public
+	 * @return 		void
+	 */
 	function Form()
 	{
+		// load CI object
 		$this->CI =& get_instance();
+		
+		// load required libraries and helpers
 		$this->CI->load->library(array(
 			'form_validation'
 		));
 		$this->CI->load->helper('form');
 		
+		// add this class to CI object
 		$this->CI->form = $this;
 		
 		log_message('debug', "Form Class Initialized");
 	}
 	
+	/**
+	 * @access public
+	 * @param boolean $valid [optional]
+	 * @return void
+	 */
 	function validation($valid = TRUE)
 	{
 		if (is_bool($valid))
@@ -43,6 +79,15 @@ class Form {
 			$this->validate = $valid;
 		}	
 	}
+	
+	/**
+	 * Load new form fields to stack
+	 * 
+	 * @access public
+	 * @param array $fields [optional]
+	 * @param string $id [optional]
+	 * @return void
+	 */
 	function vars($fields = array(), $id = 'default')
 	{
 		if ( ! isset($this->fields[$id])) 
@@ -52,6 +97,14 @@ class Form {
 		$this->fields[$id] = array_merge($this->fields[$id], $fields);
 	}
 	
+	/**
+	 * Extract form field values from $_POST or $this->CI->input->post()
+	 * 
+	 * @access public
+	 * @param array $fields [optional]
+	 * @param string $id [optional]
+	 * @return array
+	 */
 	function post($fields = array(), $id = 'default')
 	{
 		$data = array ();
@@ -79,6 +132,11 @@ class Form {
 		return $data;
 	}
 	
+	/** 
+	 * @access public
+	 * @param array $id [optional]
+	 * @return array
+	 */
 	function result($id = '')
 	{
 		if (trim($id) !== '')
@@ -91,6 +149,15 @@ class Form {
 		}
 	}
 	
+	/**
+	 * Generate HTML (for form) from stack
+	 * 
+	 * @access public
+	 * @param array $options [optional]
+	 * @param string $id [optional]
+	 * @param array $alt [optional]
+	 * @return 
+	 */
 	function generate($options = array(), $id = 'default', $alt = array())
 	{
 		$this->vars($options, $id);
@@ -102,14 +169,15 @@ class Form {
 		$this->post($fields, $id);
 		$pre = $id . '_';
 		
-		if ( ! isset($this->output[$pre]))
+		if ( ! isset($this->output[$id]))
 		{
-			$this->output[$pre] = array ();
+			$this->output[$id] = array ();
 		}
 		
 		$hidden = array ();
 		$final_html = sprintf('<%s class="%s">', $template['fieldset'], $template['fieldset_class']);
 		
+		// configure form validation rules
 		foreach ($fields as $field) 
 		{
 			$field = $this->_prepare_field($field);
@@ -119,26 +187,30 @@ class Form {
 			$this->CI->form_validation->set_rules($name, $field['name'], $rule);
 		}
 		
+		// run the form validation
 		$run = $this->CI->form_validation->run();
 		
 		foreach ($fields as $field) 
 		{
 			$html = '';
 			
+			// each field need to have minimum set of data to avoid PHP errors, in case you didn't add
 			$field = $this->_prepare_field($field);
+			// type need to be lowercase
 			$type = strtolower($field['type']);
 			
+			// add a prefix to this form, to avoid conflict name
 			$name = $pre . $field['id'];
 			
+			// dropdown is actually select
 			if ($type === 'dropdown')
 			{
 				$type = 'select';
 			}
 			
-			
+			// load field label for all fieldtype except hidden
 			if ($type !== 'hidden')
 			{
-				
 				$html .= sprintf('<%s id="tr_%s" class="%s">', $template['group'], $name, $template['group_class']);
 				$html .= sprintf('<%s class="%s">%s</%s>', $template['label'], $template['label_class'], $field['name'], $template['label']);
 				$html .= sprintf('<%s class="%s">', $template['field'], $template['field_class']);
@@ -146,6 +218,7 @@ class Form {
 			
 			$value = $this->_pick_standard($name, $field, $alt);
 			
+			// check form field type
 			switch ($type) {
 				case 'hidden' :
 					$hidden[$name] = $value;
@@ -192,9 +265,10 @@ class Form {
 					{
 						$radio_name = $name . '_' . $key;
 						
+						// give each radio a breakline
 						if ($i > 0)
 						{
-							$output .= '<br />';
+							$html .= '<br />';
 						}
 						
 						$html .= form_radio(array (
@@ -265,7 +339,7 @@ class Form {
 			
 			$html .= sprintf('</%s></%s>', $template['field'], $template['group']);
 			
-			$this->output[$pre][$field['id']] = $html;
+			$this->output[$id][$field['id']] = $html;
 			$final_html .= $html;
 		}
 		
@@ -281,6 +355,11 @@ class Form {
 		return form_hidden($hidden) . $final_html;
 	}
 	
+	/**
+	 * @access private
+	 * @param array $field [optional]
+	 * @return array
+	 */
 	function _prepare_field($field = array())
 	{
 		$default = array(
@@ -300,6 +379,13 @@ class Form {
 		return $result = array_merge($default, $field);
 	}
 	
+	/**
+	 * @access private
+	 * @param string $name
+	 * @param array $field
+	 * @param array $alt
+	 * @return string
+	 */
 	function _pick_standard($name, $field, $alt)
 	{
 		if ( !! isset($alt[$field['id']]) && trim($alt[$field['id']])) 
@@ -315,6 +401,11 @@ class Form {
 		return set_value($name, $field['value']);
 	}
 	
+	/**
+	 * @access public
+	 * @param array $data
+	 * @return void
+	 */
 	function set_template($data) {
 		if (is_array($data)) 
 		{
@@ -322,6 +413,13 @@ class Form {
 		}
 	}
 	
+	/**
+	 * Run the validation library
+	 * 
+	 * @access public
+	 * @param string $id [optional]
+	 * @return boolean
+	 */
 	function run($id = '')
 	{
 		if (trim($id) !== '')
