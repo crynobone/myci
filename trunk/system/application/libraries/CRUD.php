@@ -63,7 +63,14 @@ class CRUD {
 			}
 			else 
 			{
-				$this->CI->$segment();
+				if ( !! method_exists($this->CI, $segment))
+				{
+					$this->CI->$segment();
+				}
+				else 
+				{
+					show_404();
+				}
 			}
 		}
 	}
@@ -438,7 +445,7 @@ class CRUD {
 	
 	function _callback_404()
 	{
-		if (trim($this->data['404']) === '')
+		if ( ! isset($this->data['404']) || trim($this->data['404']) === '')
 		{
 			show_404();
 		}
