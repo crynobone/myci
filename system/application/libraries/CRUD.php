@@ -48,6 +48,7 @@ class CRUD {
 		$segment = $this->CI->uri->segment($this->data['segment'], '');
 		$is_read = array ('read', 'index', '');
 		$is_modify = array ('modify', 'update', 'write');
+		$is_read_single = array ('single');
 		$is_delete = array ('delete', 'remove');
 		$send_to = '';
 		
@@ -56,8 +57,9 @@ class CRUD {
 			$send_to = (in_array($segment, $is_read) ? 'read' : $send_to);
 			$send_to = (in_array($segment, $is_modify) ? 'modify' : $send_to);
 			$send_to = (in_array($segment, $is_delete) ? 'delete' : $send_to);
+			$send_to = (in_array($segment, $is_read_single) ? 'single' : $send_to);
 			
-			if ($send_to != '')
+			if ($send_to != '' )
 			{
 				$this->generate($send_to);
 			}
@@ -75,14 +77,14 @@ class CRUD {
 		}
 	}
 	
-	function generate($type = 'read')
+	function generate($type = 'read', $option = NULL)
 	{
-		$allowed = array ('read', 'modify', 'delete');
+		$allowed = array ('read', 'modify', 'delete', 'single');
 		$type = trim(strtolower($type));
 		
 		if ( !! in_array($type, $allowed))
 		{
-			$this->{$type}($this->data[$type]);
+			$this->{$type}($this->data[$type], $option);
 		}
 		else 
 		{
@@ -167,12 +169,17 @@ class CRUD {
 		
 	}
 	
-	function form($data = array())
+	function single($data = array())
 	{
-		return $this->modify($data);
+		return $this->modify($data, FALSE);
 	}
 	
-	function modify($data = array())
+	function form($data = array())
+	{
+		return $this->modify($data, TRUE);
+	}
+	
+	function modify($data = array(), $is_form = TRUE)
 	{
 		$data = $this->_prepare_modify($data);
 		$output = array (
@@ -193,7 +200,7 @@ class CRUD {
 		}
 		
 		
-		if ( ! $data['is_accessible'] && !! $this->data['enable_modify'])
+		if ( ! $data['is_accessible'] || ! $this->data['enable_modify'])
 		{
 			return $this->_callback_404();
 		}
@@ -205,7 +212,7 @@ class CRUD {
 			
 			if (is_array($data['fields']) && count($data['fields']) > 0)
 			{
-				$output['html']['form'] = $this->CI->form->generate($data['fields'], $data['prefix'], $data['data']);
+				$output['html']['form'] = $this->CI->form->generate($data['fields'], $data['prefix'], $data['data'], $is_form);
 				$output['html']['fields'] = $this->CI->form->output[$data['prefix']];
 				$output['html']['value'] =  $this->CI->form->value[$data['prefix']];
 				
