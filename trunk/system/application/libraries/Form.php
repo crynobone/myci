@@ -159,7 +159,7 @@ class Form {
 	 * @param array $alt [optional]
 	 * @return 
 	 */
-	function generate($options = array(), $id = 'default', $alt = array())
+	function generate($options = array(), $id = 'default', $alt = array(), $is_form = TRUE)
 	{
 		$this->vars($options, $id);
 		
@@ -189,8 +189,11 @@ class Form {
 			$field = $this->_prepare_field($field);
 			$name = $pre . $field['id'];
 			
-			$rule = str_replace('matches[', 'matches['.$pre, $field['rule']);
-			$this->CI->form_validation->set_rules($name, $field['name'], $rule);
+			if ( !! is_form)
+			{
+				$rule = str_replace('matches[', 'matches['.$pre, $field['rule']);
+				$this->CI->form_validation->set_rules($name, $field['name'], $rule);
+			}
 		}
 		
 		// run the form validation
@@ -225,123 +228,136 @@ class Form {
 			
 			$value = $this->_pick_standard($name, $field, $alt);
 			
-			// check form field type
-			switch ($type) {
-				case 'hidden' :
-					$hidden .= form_hidden($name, $value);
-					break;
-				case 'password' :
-					$html .= form_password(array (
-						'name' => $name,
-						'id' => $name,
-						'value' => form_prep($value),
-						'class' => $field['class'],
-						'maxlength' => $field['maxlength']
-					));
-					break;
-				case 'upload' :
-					$html .= form_upload(array (
-						'name' => $name,
-						'id' => $name,
-						'value' => form_prep($value),
-						'class' => $field['class']
-					));
-					break;
-				case 'textarea' :
-					$html .= form_textarea(array (
-						'name' => $name,
-						'id' => $name,
-						'value' => form_prep($value),
-						'rows' => $field['rows'],
-						'class' => $field['class'],
-						'maxlength' => $field['maxlength']
-					));
-					break;
-				case 'select' :
-					$html .= form_dropdown(
-						$name,
-						$field['options'],
-						$value,
-						'id="' . $name . '" class="' . $field['class'] . '"'
-					);
-					break;
+			if ( ! $is_form) 
+			{
+				if ( ! in_array($type, array('hidden')))
+				{
+					$html .= $value;
 				
-				case 'radio' :
-					$i = 0;
-					foreach ($field['options'] as $key => $val)
+					if (trim($field['html_view']) !== '')
 					{
-						$radio_name = $name . '_' . $key;
-						
-						// give each radio a breakline
-						if ($i > 0)
-						{
-							$html .= '<br />';
-						}
-						
-						$html .= form_radio(array (
-							'id' => $radio_name,
+						$html .= $field['html_view'];
+					}
+				}
+			}
+			else
+			{
+				// check form field type
+				switch ($type) {
+					case 'hidden' :
+						$hidden .= form_hidden($name, $value);
+						break;
+					case 'password' :
+						$html .= form_password(array (
 							'name' => $name,
-							'value' => form_prep($key),
-							'checked' => ($value == $key ? TRUE : FALSE),
+							'id' => $name,
+							'value' => form_prep($value),
+							'class' => $field['class'],
+							'maxlength' => $field['maxlength']
+						));
+						break;
+					case 'upload' :
+						$html .= form_upload(array (
+							'name' => $name,
+							'id' => $name,
+							'value' => form_prep($value),
 							'class' => $field['class']
 						));
-						$html .= form_label($val, $radio_name);
+						break;
+					case 'textarea' :
+						$html .= form_textarea(array (
+							'name' => $name,
+							'id' => $name,
+							'value' => form_prep($value),
+							'rows' => $field['rows'],
+							'class' => $field['class'],
+							'maxlength' => $field['maxlength']
+						));
+						break;
+					case 'select' :
+						$html .= form_dropdown(
+							$name,
+							$field['options'],
+							$value,
+							'id="' . $name . '" class="' . $field['class'] . '"'
+						);
+						break;
+					
+					case 'radio' :
+						$i = 0;
+						foreach ($field['options'] as $key => $val)
+						{
+							$radio_name = $name . '_' . $key;
+							
+							// give each radio a breakline
+							if ($i > 0)
+							{
+								$html .= '<br />';
+							}
+							
+							$html .= form_radio(array (
+								'id' => $radio_name,
+								'name' => $name,
+								'value' => form_prep($key),
+								'checked' => ($value == $key ? TRUE : FALSE),
+								'class' => $field['class']
+							));
+							$html .= form_label($val, $radio_name);
+							
+							$i++;
+						}
 						
-						$i++;
-					}
-					
-					break;
-					
-				case 'custom' :
-					$html .= $field['html'];
-					break;
-				case 'checkbox' :
-					
-					$checked = FALSE;
-					
-					if ($value == TRUE) 
-					{
-						$checked = TRUE;
-					}
-					
-					$html .= form_checkbox(array (
-						'id' => $name,
-						'name' => $name,
-						'value' => form_prep($value),
-						'checked' => $checked,
-						'class' => $field['class']
-					));
-					$html .= form_label($field['desc'], $name);
-					break;
-				default :
-					$html .= form_input(array (
-						'name' => $name,
-						'id' => $name,
-						'value' => form_prep($value),
-						'class' => $field['class'],
-						'maxlength' => $field['maxlength']
-					));
-					break;
-			}
+						break;
+						
+					case 'custom' :
+						$html .= $field['html'];
+						break;
+					case 'checkbox' :
+						
+						$checked = FALSE;
+						
+						if ($value == TRUE) 
+						{
+							$checked = TRUE;
+						}
+						
+						$html .= form_checkbox(array (
+							'id' => $name,
+							'name' => $name,
+							'value' => form_prep($value),
+							'checked' => $checked,
+							'class' => $field['class']
+						));
+						$html .= form_label($field['desc'], $name);
+						break;
+					default :
+						$html .= form_input(array (
+							'name' => $name,
+							'id' => $name,
+							'value' => form_prep($value),
+							'class' => $field['class'],
+							'maxlength' => $field['maxlength']
+						));
+						break;
+				}
 			
-			if ( ! in_array($type, array('hidden')))
-			{
-				if ($type !== 'custom' && trim($field['html']) !== '')
+				if ( ! in_array($type, array('hidden')))
 				{
-					$html .= $field['html'];
+					if ($type !== 'custom' && trim($field['html']) !== '')
+					{
+						$html .= $field['html'];
+					}
+					
+					if ( ! in_array($type, array('checkbox', 'radio'))) 
+					{
+						$html .= sprintf('<em>%s</em>',  $field['desc']);
+						$html .= form_error(
+							$name, 
+							sprintf('<%s class="%s">', $this->template['error'], $this->template['error_class']), 
+							sprintf('</%s>', $this->template['error'])
+						);
+					}
 				}
-				
-				if ( ! in_array($type, array('checkbox', 'radio'))) 
-				{
-					$html .= sprintf('<em>%s</em>',  $field['desc']);
-					$html .= form_error(
-						$name, 
-						sprintf('<%s class="%s">', $this->template['error'], $this->template['error_class']), 
-						sprintf('</%s>', $this->template['error'])
-					);
-				}
-				
-				
 			}
 			
 			$html .= sprintf('</%s></%s>', $template['field'], $template['group']);
@@ -388,6 +404,7 @@ class Form {
 			"options" => array(),
 			"class" => "",
 			"html" => "",
+			"html_view" => "", 
 			"maxlength" => "",
 			"rule" => "",
 			"rows" => "4",
