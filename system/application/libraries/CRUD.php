@@ -13,16 +13,16 @@ class CRUD {
 		'html' => ''
 	);
 	var $data = array (
-		'read' => array (),
-		'modify' => array (),
-		'delete' => array (),
+		'get' => array (),
+		'set' => array (),
+		'remove' => array (),
 		'model' => '',
 		'segment' => 3,
 		'segment_id' => 4,
 		'segment_xhr' => 5,
-		'enable_read' => TRUE,
-		'enable_modify' => TRUE,
-		'enable_delete' => TRUE,
+		'enable_get' => TRUE,
+		'enable_set' => TRUE,
+		'enable_remove' => TRUE,
 		'404' => ''
 	);
 	
@@ -46,18 +46,18 @@ class CRUD {
 		$this->data = array_merge($this->data, $data);
 		
 		$segment = $this->CI->uri->segment($this->data['segment'], '');
-		$is_read = array ('read', 'index', '');
-		$is_modify = array ('modify', 'update', 'write');
-		$is_read_single = array ('single');
-		$is_delete = array ('delete', 'remove');
+		$is_get = array ('get', 'index', '');
+		$is_set = array ('set', 'modify', 'write');
+		$is_get_one = array ('display', 'get_one');
+		$is_remove = array ('delete', 'remove');
 		$send_to = '';
 		
 		if (isset($segment))
 		{
-			$send_to = (in_array($segment, $is_read) ? 'read' : $send_to);
-			$send_to = (in_array($segment, $is_modify) ? 'modify' : $send_to);
-			$send_to = (in_array($segment, $is_delete) ? 'delete' : $send_to);
-			$send_to = (in_array($segment, $is_read_single) ? 'single' : $send_to);
+			$send_to = (in_array($segment, $is_get) ? 'get' : $send_to);
+			$send_to = (in_array($segment, $is_set) ? 'set' : $send_to);
+			$send_to = (in_array($segment, $is_remove) ? 'remove' : $send_to);
+			$send_to = (in_array($segment, $is_get_one) ? 'get_one' : $send_to);
 			
 			if ($send_to != '' )
 			{
@@ -77,9 +77,9 @@ class CRUD {
 		}
 	}
 	
-	function generate($type = 'read', $option = NULL)
+	function generate($type = 'get', $option = NULL)
 	{
-		$allowed = array ('read', 'modify', 'delete', 'single');
+		$allowed = array ('get', 'get_one', 'set', 'remove');
 		$type = trim(strtolower($type));
 		
 		if ( !! in_array($type, $allowed))
@@ -89,11 +89,12 @@ class CRUD {
 		else 
 		{
 			log_message('error', 'CRUD: Unable to determine request ' . $type);
+			$this->_callback_404();
 		}
 	}
-	function read($data = array ())
+	function get($data = array ())
 	{
-		$data = $this->_prepare_read($data);
+		$data = $this->_prepare_get($data);
 		
 		$datagrid = NULL;
 		$output = array (
@@ -105,7 +106,7 @@ class CRUD {
 			'total_rows' => 0
 		);
 		
-		if ( ! $data['is_accessible'] && !! $this->data['enable_read'])
+		if ( ! $data['is_accessible'] && !! $this->data['enable_get'])
 		{
 			return $this->_callback_404();
 		}
@@ -115,7 +116,8 @@ class CRUD {
 			if ( !! method_exists($this->CI->{$data['model']}, $data['method']))
 			{
 				$datagrid = $this->CI->{$data['model']}->{$data['method']}($data['limit'], $data['offset']);
-				
+				$data = args_to_array($datagrid, array('data', 'total_rows', 'header'));
+		
 				$output['data'] = $datagrid['data'];
 				$output['total_rows'] = $datagrid['total_rows'];
 				
@@ -133,7 +135,11 @@ class CRUD {
 				);
 				
 				$this->CI->table->clear();
-				$this->CI->table->set_heading($data['header']);
+				
+				if (isset($data['header'])) 
+				{
+					$this->CI->table->set_heading($data['header']);	
+				}
 				
 				$this->CI->pagination->initialize($config);
 				
@@ -154,11 +160,11 @@ class CRUD {
 		
 		if ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
 		{
-			$this->CI->{$data['callback_xhr']}($output);
+			$this->CI->{$data['callback_xhr']}($output['html'], $output['data'], $output['total_rows']);
 		}
 		elseif ( !! method_exists($this->CI, $data['callback']))
 		{
-			$this->CI->{$data['callback']}($output);
+			$this->CI->{$data['callback']}($output['html'], $output['data'], $output['total_rows']);
 		}
 		elseif ( trim($data['view']) !== '')
 		{
@@ -171,19 +177,14 @@ class CRUD {
 		
 	}
 	
-	function single($data = array())
+	function get_one($data = array())
 	{
-		return $this->modify($data, FALSE);
+		return $this->set($data, FALSE);
 	}
 	
-	function form($data = array())
+	function set($data = array(), $is_form = TRUE)
 	{
-		return $this->modify($data, TRUE);
-	}
-	
-	function modify($data = array(), $is_form = TRUE)
-	{
-		$data = $this->_prepare_modify($data);
+		$data = $this->_prepare_set($data);
 		$output = array (
 			'html' => array (
 				'form' => '',
@@ -202,7 +203,7 @@ class CRUD {
 		}
 		
 		
-		if ( ! $data['is_accessible'] || ! $this->data['enable_modify'])
+		if ( ! $data['is_accessible'] || ! $this->data['enable_set'])
 		{
 			return $this->_callback_404();
 		}
@@ -265,11 +266,11 @@ class CRUD {
 		}
 		elseif ( !! method_exists($this->CI, $data['callback']))
 		{
-			$this->CI->{$data['callback']}($output);
+			$this->CI->{$data['callback']}($output['html'], $output['response']);
 		}
 		elseif ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
 		{
-			$this->CI->{$data['callback_xhr']}($output);
+			$this->CI->{$data['callback_xhr']}($output['html'], $output['response']);
 		}
 		else 
 		{
@@ -277,14 +278,14 @@ class CRUD {
 		}
 	}
 	
-	function delete($data = array())
+	function remove($data = array())
 	{
-		$data = $this->_prepare_delete($data);
+		$data = $this->_prepare_remove($data);
 		$output = array (
 			'response' => $this->default_response
 		);
 		
-		if ( ! $data['is_accessible'] && !! $this->data['enabled']['delete'])
+		if ( ! $data['is_accessible'] && !! $this->data['enabled_remove'])
 		{
 			return $this->_callback_404();
 		}
@@ -305,16 +306,6 @@ class CRUD {
 			if ($output['response']['success'] === TRUE && trim($output['response']['redirect']) !== '')
 			{
 				redirect($output['response']['redirect']);
-			} 						
-			elseif ($output['response']['success'] === FALSE) 
-			{
-				$output['html']['error'] = sprintf(
-					'<%s class="%s">%s</%s>',
-					$this->CI->form->template['error'],
-					$this->CI->form->template['error_class'],
-					$output['response']['error'],
-					$this->CI->form->template['error']
-				);
 			}
 		}
 		else 
@@ -325,15 +316,15 @@ class CRUD {
 			
 		if ( trim($data['view']) !== '')
 		{
-			$this->_callback_viewer($output['html'], $data['output'], $data['view']);
+			$this->_callback_viewer(array (), $data['output'], $data['view']);
 		}
 		elseif ( !! method_exists($this->CI, $data['callback']))
 		{
-			$this->CI->{$data['callback']}($output);
+			$this->CI->{$data['callback']}($output['response']);
 		}
 		elseif ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
 		{
-			$this->CI->{$data['callback_xhr']}($output);
+			$this->CI->{$data['callback_xhr']}($output['response']);
 		}
 		else 
 		{
@@ -341,7 +332,7 @@ class CRUD {
 		}
 	}
 	
-	function _prepare_read($data)
+	function _prepare_get($data)
 	{
 		$model = 'model';
 		
@@ -352,7 +343,7 @@ class CRUD {
 		
 		$default = array (
 			'model' => $model,
-			'method' => 'read',
+			'method' => 'get',
 			'callback' => '',
 			'callback_xhr' => '',
 			'header' => array (),
@@ -374,7 +365,7 @@ class CRUD {
 		
 	}
 	
-	function _prepare_modify($data)
+	function _prepare_set($data)
 	{
 		$model = 'model';
 		
@@ -406,7 +397,7 @@ class CRUD {
 		return array_merge($default, $data);
 	}
 	
-	function _prepare_delete($data)
+	function _prepare_remove($data)
 	{
 		$model = 'model';
 		
@@ -418,7 +409,7 @@ class CRUD {
 		$default = array (
 			'id' => 0,
 			'model' => $model,
-			'method' => 'delete',
+			'method' => 'remove',
 			'callback' => '',
 			'callback_xhr' => '',
 			'output' => array (),
