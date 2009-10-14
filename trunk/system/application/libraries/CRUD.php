@@ -143,11 +143,13 @@ class CRUD {
 			else 
 			{
 				log_message('error', 'CRUD: cannot locate method under Application model class');
+				return $this->_callback_404();
 			}
 		}
 		else 
 		{
 			log_message('error', 'CRUD: cannot locate Application model class');
+			return $this->_callback_404();
 		}
 		
 		if ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
@@ -229,6 +231,7 @@ class CRUD {
 					else 
 					{
 						log_message('error', 'CRUD: cannot locate method under Application model class');
+						return $this->_callback_404();
 					}
 					
 					if ($output['response']['success'] === TRUE && trim($output['response']['redirect']) !== '')
@@ -253,6 +256,7 @@ class CRUD {
 		else 
 		{
 			log_message('error', 'CRUD: cannot locate Application model class');
+			return $this->_callback_404();
 		}
 			
 		if ( trim($data['view']) !== '')
@@ -295,6 +299,7 @@ class CRUD {
 			else 
 			{
 				log_message('error', 'CRUD: cannot locate method under Application model class');
+				return $this->_callback_404();
 			}
 					
 			if ($output['response']['success'] === TRUE && trim($output['response']['redirect']) !== '')
@@ -315,6 +320,7 @@ class CRUD {
 		else 
 		{
 			log_message('error', 'CRUD: cannot locate Application model class');
+			return $this->_callback_404();
 		}
 			
 		if ( trim($data['view']) !== '')
