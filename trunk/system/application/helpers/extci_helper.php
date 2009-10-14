@@ -143,3 +143,37 @@ if ( ! function_exists('to_proper_date'))
 		return implode('-', array_reverse(explode('-', $date)));
 	}
 }
+
+if ( ! function_exists('to_proper_datetime'))
+{
+	function to_proper_datetime($datetime)
+	{
+		$date = explode(' ', $datetime);
+		return implode('-', array_reverse(explode('-', $date[0]))) . ' ' . $date[1];
+	}
+}
+
+if ( ! function_exists('args_to_array'))
+{
+	function args_to_array($args = array(), $option = array (), $offset = 1)
+	{
+		$output = array ();
+		
+		if (count($args) != $offset)
+		{
+			foreach ($option as $key => $val)
+			{
+				if (isset($args[$key]))
+				{
+					$output[$val] = $args[$key];
+				}
+			}
+		}
+		else 
+		{
+			$output = $args;
+		}
+		
+		return $output;
+	}
+}
