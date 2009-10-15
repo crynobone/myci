@@ -1,16 +1,34 @@
-<?php
+<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+
+/**
+ * CRUD Generator for CodeIgniter
+ *
+ * PHP version 5
+ *
+ * @category  CodeIgniter
+ * @package   CRUD CI
+ * @author    Mior Muhammad Zaki (hello@crynobone.com)
+ * @version   0.1
+ * Copyright (c) 2009 Mior Muhammad Zaki  (http://crynobone.com)
+ * Licensed under the MIT.
+*/
 
 class CRUD {
+	// CI Singleton
 	var $CI = NULL;
+	
+	// set default modify/delete response
 	var $default_response = array (
 		'success' => FALSE,
 		'redirect' => '',
 		'error' => '',
 		'data' => array ()
 	);
-	var $output = array (
-		'html' => ''
-	);
+	
+	// Allow output to be access
+	var $output = array ();
+	
+	// set global configuration variables for CRUD
 	var $data = array (
 		'get' => array (),
 		'set' => array (),
@@ -25,21 +43,35 @@ class CRUD {
 		'404' => ''
 	);
 	
+	/**
+	 * Constructor
+	 * 
+	 * @access		public
+	 * @return 		void
+	 */
 	function CRUD()
 	{
+		// load CI object
 		$this->CI =& get_instance();
 		
+		// load required libraries
 		$this->CI->load->library(array (
 			'Form',
 			'Table',
 			'Pagination'
 		));
 		
+		// add this class to CI object
 		$this->CI->CRUD = $this;
 		
 		log_message('debug', "CRUD Class Initialized");
 	}
 	
+	/**
+	 * 
+	 * @param object $data [optional]
+	 * @return 
+	 */
 	function initialize($data = array ())
 	{
 		$this->data = array_merge($this->data, $data);
@@ -158,6 +190,8 @@ class CRUD {
 			log_message('error', 'CRUD: cannot locate Application model class');
 			return $this->_callback_404();
 		}
+		
+		$this->output = $output;
 		
 		if ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
 		{
@@ -475,7 +509,14 @@ class CRUD {
 		}
 	}
 	
-	function _callback_viewer($scaffold, $output, $view)
+	/**
+	 * 
+	 * @param object $scaffold [optional]
+	 * @param object $output [optional]
+	 * @param object $view [optional]
+	 * @return 
+	 */
+	function _callback_viewer($scaffold = array (), $output = array (), $view = '')
 	{
 		$output = array_merge($output, $scaffold);
 		

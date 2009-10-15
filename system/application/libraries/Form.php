@@ -238,9 +238,9 @@ class Form {
 				{
 					$html .= $value;
 				
-					if (trim($field['html_view']) !== '')
+					if (trim($field['display']) !== '')
 					{
-						$html .= $field['html_view'];
+						$html .= $field['display'];
 					}
 				}
 			}
@@ -410,7 +410,7 @@ class Form {
 			"options" => array(),
 			"class" => "",
 			"html" => "",
-			"html_view" => "", 
+			"display" => "", 
 			"maxlength" => "",
 			"rule" => "",
 			"rows" => "4",
