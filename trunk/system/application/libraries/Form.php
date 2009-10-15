@@ -69,6 +69,8 @@ class Form {
 	}
 	
 	/**
+	 * Check whether the form is validated
+	 * 
 	 * @access public
 	 * @param boolean $valid [optional]
 	 * @return void
@@ -133,7 +135,9 @@ class Form {
 		return $data;
 	}
 	
-	/** 
+	/**
+	 * Return form result for all or based on prefix
+	 *  
 	 * @access public
 	 * @param array $id [optional]
 	 * @return array
@@ -189,7 +193,7 @@ class Form {
 			$field = $this->_prepare_field($field);
 			$name = $pre . $field['id'];
 			
-			if ( !! is_form)
+			if ( !! $is_form)
 			{
 				$rule = str_replace('matches[', 'matches['.$pre, $field['rule']);
 				$this->CI->form_validation->set_rules($name, $field['name'], $rule);
@@ -389,6 +393,8 @@ class Form {
 	}
 	
 	/**
+	 * Prepare all the fields for minimum requirement
+	 * 
 	 * @access private
 	 * @param array $field [optional]
 	 * @return array
@@ -415,6 +421,8 @@ class Form {
 	}
 	
 	/**
+	 * Set input value for each of the fields
+	 * 
 	 * @access private
 	 * @param string $name
 	 * @param array $field
@@ -437,6 +445,8 @@ class Form {
 	}
 	
 	/**
+	 * Set HTML template for Form
+	 * 
 	 * @access public
 	 * @param array $data
 	 * @return void
