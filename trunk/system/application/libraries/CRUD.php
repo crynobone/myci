@@ -8,7 +8,6 @@ class CRUD {
 		'error' => '',
 		'data' => array ()
 	);
-	var $form = NULL;
 	var $output = array (
 		'html' => ''
 	);
@@ -116,7 +115,7 @@ class CRUD {
 			if ( !! method_exists($this->CI->{$data['model']}, $data['method']))
 			{
 				$datagrid = $this->CI->{$data['model']}->{$data['method']}($data['limit'], $data['offset']);
-				$data = args_to_array($datagrid, array('data', 'total_rows', 'header'));
+				$datagrid = args_to_array($datagrid, array('data', 'total_rows', 'header'));
 		
 				$output['data'] = $datagrid['data'];
 				$output['total_rows'] = $datagrid['total_rows'];
@@ -133,6 +132,8 @@ class CRUD {
 					'cur_page' => $data['offset'],
 					'suffix_url' => $data['suffix_url']
 				);
+				
+				$config = array_merge($config, $data['pagination_template']);
 				
 				$this->CI->table->clear();
 				
@@ -180,6 +181,11 @@ class CRUD {
 	function get_one($data = array())
 	{
 		return $this->set($data, FALSE);
+	}
+	
+	function form($data = array ())
+	{
+		return $this->set($data);
 	}
 	
 	function set($data = array(), $is_form = TRUE)
@@ -382,6 +388,7 @@ class CRUD {
 			'callback_xhr' => '',
 			'prefix' => 'default',
 			'form_template' => array(),
+			'pagination_template' => array(),
 			'fields' => array (),
 			'data' => array(),
 			'output' => array (),
