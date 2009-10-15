@@ -74,15 +74,20 @@ class CRUD {
 	 */
 	function initialize($data = array ())
 	{
+		// extends configurator
 		$this->data = array_merge($this->data, $data);
 		
+		// get actually uri segment, useful when you are configuring in _remap method
 		$segment = $this->CI->uri->segment($this->data['segment'], '');
+		
+		// set all possible uri segment value
 		$is_get = array ('get', 'index', '');
 		$is_set = array ('set', 'modify', 'write');
 		$is_get_one = array ('display', 'get_one');
 		$is_remove = array ('delete', 'remove');
 		$send_to = '';
 		
+		// test segment
 		if (isset($segment))
 		{
 			$send_to = (in_array($segment, $is_get) ? 'get' : $send_to);
@@ -92,27 +97,42 @@ class CRUD {
 			
 			if ($send_to != '' )
 			{
+				// method found, so send to related method
 				$this->generate($send_to);
 			}
 			else 
 			{
 				if ( !! method_exists($this->CI, $segment))
 				{
+					// method not found but Controller contain this method
 					$this->CI->$segment();
 				}
 				else 
 				{
+					// to prevent blank screen if everything else failed, load the 404
 					show_404();
 				}
 			}
 		}
+		else {
+			// this might be impossible to happen, but let just throw a 404 (just-in-case)
+			show_404();
+		}
 	}
 	
+	/**
+	 * Generate the CRUD
+	 * 
+	 * @param object $type [optional]
+	 * @param object $option [optional]
+	 * @return 
+	 */
 	function generate($type = 'get', $option = NULL)
 	{
 		$allowed = array ('get', 'get_one', 'set', 'remove');
 		$type = trim(strtolower($type));
 		
+		// first we need to check whether it's pointing to valid method
 		if ( !! in_array($type, $allowed))
 		{
 			$this->{$type}($this->data[$type], $option);
@@ -120,14 +140,23 @@ class CRUD {
 		else 
 		{
 			log_message('error', 'CRUD: Unable to determine request ' . $type);
+			// 404 using CRUD callback
 			$this->_callback_404();
 		}
 	}
+	
+	/**
+	 * 
+	 * @param object $data [optional]
+	 * @return 
+	 */
 	function get($data = array ())
 	{
+		// prepare configuration variable
 		$data = $this->_prepare_get($data);
-		
 		$datagrid = NULL;
+		
+		// output template for this method
 		$output = array (
 			'html' => array (
 				'datagrid' => '',
@@ -137,26 +166,42 @@ class CRUD {
 			'total_rows' => 0
 		);
 		
+		// show 404 if access to method is revoke
 		if ( ! $data['is_accessible'] && !! $this->data['enable_get'])
 		{
 			return $this->_callback_404();
 		}
 		
-		if ( !! property_exists($this->CI, $data['model']))
+		$model = $data['model'];
+		$method = $data['method'];
+		
+		if ( !! property_exists($this->CI, $model))
 		{
-			if ( !! method_exists($this->CI->{$data['model']}, $data['method']))
+			if ( !! method_exists($this->CI->{$model}, $method))
 			{
-				$datagrid = $this->CI->{$data['model']}->{$data['method']}($data['limit'], $data['offset']);
-				$datagrid = args_to_array($datagrid, array('data', 'total_rows', 'header'));
+				// get data from method
+				$datagrid = $this->CI->{$model}->{$method}(
+					$data['limit'], 
+					$data['offset']
+				);
+				
+				$datagrid = args_to_array(
+					$datagrid, 
+					array('data', 'total_rows', 'header')
+				);
 		
 				$output['data'] = $datagrid['data'];
 				$output['total_rows'] = $datagrid['total_rows'];
 				
+				// clear table & set table header
+				$this->CI->table->clear();
 				if ( isset($datagrid['header']) && is_array($datagrid['header']))
 				{
 					$data['header'] = $datagrid['header'];
+					$this->CI->table->set_heading($data['header']);	
 				}
 				
+				// define pagination configuration
 				$config = array (
 					'base_url' => $data['base_url'],
 					'total_rows' => $output['total_rows'],
@@ -165,48 +210,51 @@ class CRUD {
 					'suffix_url' => $data['suffix_url']
 				);
 				
+				// group pagination configuration & template
 				$config = array_merge($config, $data['pagination_template']);
-				
-				$this->CI->table->clear();
-				
-				if (isset($data['header'])) 
-				{
-					$this->CI->table->set_heading($data['header']);	
-				}
 				
 				$this->CI->pagination->initialize($config);
 				
+				// generate table & pagination links
 				$output['html']['datagrid'] = $this->CI->table->generate($output['data']);
 				$output['html']['pagination'] = $this->CI->pagination->create_links();
 			}
 			else 
 			{
+				// method is not available
 				log_message('error', 'CRUD: cannot locate method under Application model class');
 				return $this->_callback_404();
 			}
 		}
 		else 
 		{
+			// model is not available
 			log_message('error', 'CRUD: cannot locate Application model class');
 			return $this->_callback_404();
 		}
 		
+		// extends output to global var
 		$this->output = $output;
+		
 		
 		if ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
 		{
+			// output as an XHR callback
 			$this->CI->{$data['callback_xhr']}($output['html'], $output['data'], $output['total_rows']);
 		}
 		elseif ( !! method_exists($this->CI, $data['callback']))
 		{
+			// output to a method in Controller
 			$this->CI->{$data['callback']}($output['html'], $output['data'], $output['total_rows']);
 		}
 		elseif ( trim($data['view']) !== '')
 		{
+			// output using CRUD viewer
 			$this->_callback_viewer($output['html'], $data['output'], $data['view']);
 		}
 		else 
 		{
+			// return the data
 			return $output;
 		}
 		
@@ -234,15 +282,14 @@ class CRUD {
 			), 
 			'response' => $this->default_response
 		);
-		
+		// try to set form template when included
 		$form_template = $data['form_template'];
-		
 		if (is_array($form_template) && count($form_template))
 		{
 			$this->CI->form->set_template($form_template);
 		}
 		
-		
+		// stop processing if method access to off
 		if ( ! $data['is_accessible'] || ! $this->data['enable_set'])
 		{
 			return $this->_callback_404();
@@ -318,6 +365,11 @@ class CRUD {
 		}
 	}
 	
+	/**
+	 * @access private
+	 * @param object $data [optional]
+	 * @return 
+	 */
 	function remove($data = array())
 	{
 		$data = $this->_prepare_remove($data);
@@ -372,6 +424,12 @@ class CRUD {
 		}
 	}
 	
+	/**
+	 * 
+	 * @access private
+	 * @param object $data
+	 * @return 
+	 */
 	function _prepare_get($data)
 	{
 		$model = 'model';
@@ -405,6 +463,13 @@ class CRUD {
 		
 	}
 	
+	/**
+	 * Prepare configuration for modify
+	 * 
+	 * @access private
+	 * @param object $data
+	 * @return 
+	 */
 	function _prepare_set($data)
 	{
 		$model = 'model';
@@ -438,6 +503,13 @@ class CRUD {
 		return array_merge($default, $data);
 	}
 	
+	/**
+	 * Prepare configuration for remove
+	 * 
+	 * @access private
+	 * @param object $data
+	 * @return 
+	 */
 	function _prepare_remove($data)
 	{
 		$model = 'model';
@@ -466,6 +538,14 @@ class CRUD {
 		return array_merge($default, $data);
 	}
 	
+	/**
+	 * Determine source of data from Model; Array, Method or Property
+	 * 
+	 * @access private
+	 * @param object $data
+	 * @param object $prefix
+	 * @return 
+	 */
 	function _organizer($data, $prefix)
 	{
 		$output = $data[$prefix];
@@ -488,6 +568,12 @@ class CRUD {
 		return $output;
 	}
 	
+	/**
+	 * Prepare Error output to browser
+	 * 
+	 * @access private
+	 * @return 
+	 */
 	function _callback_404()
 	{
 		if ( ! isset($this->data['404']) || trim($this->data['404']) === '')
@@ -510,7 +596,9 @@ class CRUD {
 	}
 	
 	/**
+	 * Prepare CRUD output to browser
 	 * 
+	 * @access private
 	 * @param object $scaffold [optional]
 	 * @param object $output [optional]
 	 * @param object $view [optional]
