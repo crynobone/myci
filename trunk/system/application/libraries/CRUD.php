@@ -366,38 +366,50 @@ class CRUD {
 	}
 	
 	/**
-	 * @access private
+	 * CRUD function for Delete
+	 * 
+	 * @access public
 	 * @param object $data [optional]
 	 * @return 
 	 */
 	function remove($data = array())
 	{
+		// prepare configuration
 		$data = $this->_prepare_remove($data);
+		$model = $data['model'];
+		$method = $data['method'];
+		
+		// default response value
 		$output = array (
 			'response' => $this->default_response
 		);
 		
+		// disable access: useful when user doesn't have ACL access
 		if ( ! $data['is_accessible'] && !! $this->data['enabled_remove'])
 		{
 			return $this->_callback_404();
 		}
 		
-		if ( !! property_exists($this->CI, $data['model']))
+		if ( !! property_exists($this->CI, $model))
 		{
+			$response = $output['response'];
 			
-			if ( !! method_exists($this->CI->{$data['model']}, $data['method']))
+			if ( !! method_exists($this->CI->{$model}, $method))
 			{
-				$output['response'] = $this->CI->{$data['model']}->{$data['method']}($result, $this->default_response);
+				// get return value from delete method
+				// response should be based from $this->default_response
+				$response = $output['response'] = $this->CI->{$model}->{$method}($result, $response);
 			}
 			else 
 			{
 				log_message('error', 'CRUD: cannot locate method under Application model class');
 				return $this->_callback_404();
 			}
-					
-			if ($output['response']['success'] === TRUE && trim($output['response']['redirect']) !== '')
+			
+			// if action is successful and redirect automatically
+			if ($response['success'] === TRUE && trim($response['redirect']) !== '')
 			{
-				redirect($output['response']['redirect']);
+				redirect($response['redirect']);
 			}
 		}
 		else 
@@ -405,26 +417,36 @@ class CRUD {
 			log_message('error', 'CRUD: cannot locate Application model class');
 			return $this->_callback_404();
 		}
-			
-		if ( trim($data['view']) !== '')
+		
+		$callback = $data['callback'];
+		$view = $data['view'];
+		$xhr = $data['callback_xhr'];
+ 		
+		if ( trim($view) !== '')
 		{
-			$this->_callback_viewer(array (), $data['output'], $data['view']);
+			// view file is set, try to initiate
+			$this->_callback_viewer(array (), $data['output'], $view);
 		}
-		elseif ( !! method_exists($this->CI, $data['callback']))
+		elseif ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $xhr))
 		{
-			$this->CI->{$data['callback']}($output['response']);
+			// differentiate XHR/Ajax request
+			$this->CI->{$xhr}($output['response']);
 		}
-		elseif ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
+		elseif ( !! method_exists($this->CI, $callback))
 		{
-			$this->CI->{$data['callback_xhr']}($output['response']);
+			// 
+			$this->CI->{$callback}($output['response']);
 		}
+		
 		else 
 		{
+			// return output to allow full customization
 			return $output;
 		}
 	}
 	
 	/**
+	 * Prepare configuration from $this->get (Retrieve)
 	 * 
 	 * @access private
 	 * @param object $data
@@ -432,13 +454,14 @@ class CRUD {
 	 */
 	function _prepare_get($data)
 	{
+		// set default model to 'model', unless specified otherwise
 		$model = 'model';
-		
 		if ( trim($this->data['model']) !== '')
 		{
 			$model = $this->data['model'];
 		}
 		
+		// default configuration array
 		$default = array (
 			'model' => $model,
 			'method' => 'get',
@@ -454,17 +477,17 @@ class CRUD {
 			'is_accessible' => TRUE
 		);
 		
+		// using 'segment_id' to detect offset for pagination
 		if ( ! isset($data['offset']) && $this->data['segment_id'] > 0)
 		{
 			$data['offset'] = $this->CI->uri->segment($this->data['segment_id'], 0);
 		}
 		
 		return array_merge($default, $data);
-		
 	}
 	
 	/**
-	 * Prepare configuration for modify
+	 * Prepare configuration for modify (create, update & retrieve single)
 	 * 
 	 * @access private
 	 * @param object $data
@@ -472,13 +495,14 @@ class CRUD {
 	 */
 	function _prepare_set($data)
 	{
+		// set default model to 'model', unless specified otherwise
 		$model = 'model';
-		
 		if ( trim($this->data['model']) !== '')
 		{
 			$model = $this->data['model'];
 		}
 		
+		// default configuration array
 		$default = array (
 			'id' => 0,
 			'model' => $model,
@@ -495,6 +519,7 @@ class CRUD {
 			'is_accessible' => TRUE
 		);
 		
+		// using 'segment_id' to detect data identity (only support integer)
 		if ( ! isset($data['id']) && $this->data['segment_id'] > 0)
 		{
 			$data['id'] = $this->CI->uri->segment($this->data['segment_id'], 0);
@@ -504,7 +529,7 @@ class CRUD {
 	}
 	
 	/**
-	 * Prepare configuration for remove
+	 * Prepare configuration for remove (delete)
 	 * 
 	 * @access private
 	 * @param object $data
@@ -549,20 +574,28 @@ class CRUD {
 	function _organizer($data, $prefix)
 	{
 		$output = $data[$prefix];
+		$model = $data['model'];
 		
+		// $output should be an array, otherwise assume it referring 
+		// to either a method or property under model
 		if ( !! is_string($output) && trim($output) !== '')
 		{
-			if ( !!  method_exists($this->CI->{$data['model']}, $output))
+			if ( !!  method_exists($this->CI->{$model}, $output))
 			{
-				$output = $this->CI->{$data['model']}->{$output}($data['id']);
+				// get the return value from method under model
+				$output = $this->CI->{$model}->{$output}($data['id']);
 			}
-			elseif ( !! property_exists($this->CI->{$data['model']}, $output))
+			elseif ( !! property_exists($this->CI->{$model}, $output))
 			{
-				$output = $this->CI->{$data['model']}->{$output};
+				// get the value from property under model
+				$output = $this->CI->{$model}->{$output};
 			}
-			else {
-				$output = array ();
-			}
+		}
+		
+		if ( !is_array($output))
+		{
+			// to be save return an empty array
+			$output = array ();
 		}
 		
 		return $output;
@@ -584,12 +617,14 @@ class CRUD {
 		{
 			if ( !! property_exists($this->CI, 'ui')) 
 			{
+				// Using Template for CI: $this->ui
 				$this->CI->ui->set_title('Module not accessible');
 				$this->CI->ui->view($this->data['404']);
 				$this->CI->ui->render();
 			}
 			else 
 			{
+				// Using CI default template
 				$this->CI->load->view($this->data['404']);
 			}
 		}
@@ -608,11 +643,14 @@ class CRUD {
 	{
 		$output = array_merge($output, $scaffold);
 		
+		// if Template for CI is loaded: $this->ui
 		if ( !! property_exists($this->CI, 'ui')) 
 		{
-			if (isset($output['title']) && trim($output['title']) !== '')
+			// Automatically set <title> if available
+			$title = $output['title'];
+			if (isset($title) && trim($title) !== '')
 			{
-				$this->CI->ui->set_title($output['title']);
+				$this->CI->ui->set_title($title);
 			}
 			
 			$this->CI->ui->view($view, $output);
@@ -620,6 +658,7 @@ class CRUD {
 		}
 		else 
 		{
+			// Using CI default template
 			$this->CI->load->view($view, $output);
 		}
 	}
