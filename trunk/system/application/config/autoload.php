@@ -39,7 +39,7 @@
 |	$autoload['libraries'] = array('database', 'session', 'xmlrpc');
 */
 
-$autoload['libraries'] = array('database', 'template', 'authentication', 'parser');
+$autoload['libraries'] = array('database', 'template', 'authentication');
 
 
 /*
@@ -51,7 +51,7 @@ $autoload['libraries'] = array('database', 'template', 'authentication', 'parser
 |	$autoload['helper'] = array('url', 'file');
 */
 
-$autoload['helper'] = array('array', 'url', 'cookie', 'html', 'project');
+$autoload['helper'] = array('array', 'url', 'cookie', 'html', 'extci');
 
 
 /*
