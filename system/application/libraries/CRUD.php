@@ -127,15 +127,20 @@ class CRUD {
 	 * @param object $option [optional]
 	 * @return 
 	 */
-	function generate($type = 'get', $option = NULL)
+	function generate($type = 'get')
 	{
 		$allowed = array ('get', 'get_one', 'set', 'remove');
-		$type = trim(strtolower($type));
+		$type_data = $type = trim(strtolower($type));
+		
+		if ($type == 'get_one')
+		{
+			$type_data = 'set';
+		}
 		
 		// first we need to check whether it's pointing to valid method
 		if ( !! in_array($type, $allowed))
 		{
-			$this->{$type}($this->data[$type], $option);
+			$this->{$type}($this->data[$type_data]);
 		}
 		else 
 		{
@@ -189,7 +194,7 @@ class CRUD {
 					$datagrid, 
 					array('data', 'total_rows', 'header')
 				);
-		
+				
 				$output['data'] = $datagrid['data'];
 				$output['total_rows'] = $datagrid['total_rows'];
 				
@@ -398,7 +403,7 @@ class CRUD {
 			{
 				// get return value from delete method
 				// response should be based from $this->default_response
-				$response = $output['response'] = $this->CI->{$model}->{$method}($result, $response);
+				$response = $output['response'] = $this->CI->{$model}->{$method}($data['id'], $response);
 			}
 			else 
 			{
@@ -474,6 +479,7 @@ class CRUD {
 			'suffix_url' => '',
 			'output' => array (),
 			'view' => '',
+			'pagination_template' => array(),
 			'is_accessible' => TRUE
 		);
 		
@@ -511,7 +517,6 @@ class CRUD {
 			'callback_xhr' => '',
 			'prefix' => 'default',
 			'form_template' => array(),
-			'pagination_template' => array(),
 			'fields' => array (),
 			'data' => array(),
 			'output' => array (),
@@ -667,7 +672,7 @@ class CRUD {
 	{
 		$output = array ();
 		
-		if (count($args) != $offset)
+		if (count($args) == $offset)
 		{
 			foreach ($option as $key => $val)
 			{
