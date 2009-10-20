@@ -185,7 +185,7 @@ class CRUD {
 					$data['offset']
 				);
 				
-				$datagrid = args_to_array(
+				$datagrid = $this->_args_to_array(
 					$datagrid, 
 					array('data', 'total_rows', 'header')
 				);
@@ -661,5 +661,27 @@ class CRUD {
 			// Using CI default template
 			$this->CI->load->view($view, $output);
 		}
+	}
+	
+	function _args_to_array($args = array(), $option = array (), $offset = 1)
+	{
+		$output = array ();
+		
+		if (count($args) != $offset)
+		{
+			foreach ($option as $key => $val)
+			{
+				if (isset($args[$key]))
+				{
+					$output[$val] = $args[$key];
+				}
+			}
+		}
+		else 
+		{
+			$output = $args;
+		}
+		
+		return $output;
 	}
 }
