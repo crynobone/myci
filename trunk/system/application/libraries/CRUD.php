@@ -287,6 +287,7 @@ class CRUD {
 			), 
 			'response' => $this->default_response
 		);
+		
 		// try to set form template when included
 		$form_template = $data['form_template'];
 		if (is_array($form_template) && count($form_template))

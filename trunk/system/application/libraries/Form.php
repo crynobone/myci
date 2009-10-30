@@ -38,9 +38,11 @@ class Form {
 		'group' => 'div',
 		'group_class' => 'fields',
 		'label' => 'label',
-		'label_class' => '',
+		'label_class' => 'label_field',
 		'field' => 'div',
-		'field_class' => '',
+		'field_class' => 'input_field',
+		'radio' => 'div',
+		'radio_class' => 'radio_field',
 		'error' => 'div',
 		'error_class' => 'errorbox'
 	);
@@ -288,16 +290,11 @@ class Form {
 						break;
 					
 					case 'radio' :
-						$i = 0;
 						foreach ($field['options'] as $key => $val)
 						{
 							$radio_name = $name . '_' . $key;
 							
-							// give each radio a breakline
-							if ($i > 0)
-							{
-								$html .= '<br />';
-							}
+							$html .= sprintf('<%s class="%s">', $template['radio'], $template['radio_class']);
 							
 							$html .= form_radio(array (
 								'id' => $radio_name,
@@ -308,13 +305,16 @@ class Form {
 							));
 							$html .= form_label($val, $radio_name);
 							
-							$i++;
+							$html .= sprintf('</%s>', $template['radio']);
 						}
 						
 						break;
 						
 					case 'custom' :
 						$html .= $field['html'];
+						break;
+					case 'readonly' :
+						$html .= $value;
 						break;
 					case 'checkbox' :
 						
@@ -328,11 +328,31 @@ class Form {
 						$html .= form_checkbox(array (
 							'id' => $name,
 							'name' => $name,
-							'value' => form_prep($value),
+							'value' => form_prep('true'),
 							'checked' => $checked,
 							'class' => $field['class']
 						));
 						$html .= form_label($field['desc'], $name);
+						break;
+					case 'checkbox[]' :
+						
+						foreach ($field['options'] as $key => $val)
+						{
+							$check_name = $name . '_' . $key;
+							
+							$html .= sprintf('<%s class="%s">', $template['radio'], $template['radio_class']);
+							
+							$html .= form_checkbox(array (
+								'id' => $check_name,
+								'name' => $name . '[]',
+								'value' => form_prep($key),
+								'checked' => (in_array($key, $value) ? TRUE : FALSE),
+								'class' => $field['class']
+							));
+							$html .= form_label($val, $name);
+							
+							$html .= sprintf('</%s>', $template['radio']);
+						}
 						break;
 					default :
 						$html .= form_input(array (
@@ -431,9 +451,11 @@ class Form {
 	 */
 	function _pick_standard($name, $field, $alt)
 	{
-		if ( !! isset($alt[$field['id']]) && trim($alt[$field['id']]) !== '') 
+		$id = $field['id'];
+		
+		if ( !! isset($alt[$id]) && (is_array($alt[$id]) || trim($alt[$id]) !== '')) 
 		{
-			$field['value'] = $alt[$field['id']];
+			$field['value'] = $alt[$id];
 		}
 		
 		if ( ! isset($field['value']) || $field['value'] === NULL) 
