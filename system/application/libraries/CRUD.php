@@ -165,11 +165,19 @@ class CRUD {
 		$output = array (
 			'html' => array (
 				'datagrid' => '',
+				'data' => array (),
 				'pagination' => ''
 			),
 			'data' => array (),
 			'total_rows' => 0
 		);
+		
+		// try to set table template when included
+		$table_template = $data['table_template'];
+		if (is_array($table_template) && count($table_template))
+		{
+			$this->CI->table->set_template($table_template);
+		}
 		
 		// show 404 if access to method is revoke
 		if ( ! $data['is_accessible'] && !! $this->data['enable_get'])
@@ -192,7 +200,7 @@ class CRUD {
 				
 				$datagrid = $this->_args_to_array(
 					$datagrid, 
-					array('data', 'total_rows', 'header')
+					array('data', 'total_rows', 'header', 'formatter')
 				);
 				
 				$output['data'] = $datagrid['data'];
@@ -203,8 +211,14 @@ class CRUD {
 				if ( isset($datagrid['header']) && is_array($datagrid['header']))
 				{
 					$data['header'] = $datagrid['header'];
-					$this->CI->table->set_heading($data['header']);	
 				}
+				$this->CI->table->set_heading($data['header']);	
+				
+				if ( isset($datagrid['formatter']) && is_array($datagrid['formatter']))
+				{
+					$data['formatter'] = $datagrid['formatter'];
+				}
+				$this->CI->table->set_formatter($data['formatter']);
 				
 				// define pagination configuration
 				$config = array (
@@ -222,6 +236,7 @@ class CRUD {
 				
 				// generate table & pagination links
 				$output['html']['datagrid'] = $this->CI->table->generate($output['data']);
+				$output['html']['data'] = $output['data'];
 				$output['html']['pagination'] = $this->CI->pagination->create_links();
 			}
 			else 
@@ -473,13 +488,16 @@ class CRUD {
 			'method' => 'get',
 			'callback' => '',
 			'callback_xhr' => '',
-			'header' => array (),
 			'limit' => 30,
 			'offset' => 0,
 			'base_url' => current_url(),
 			'suffix_url' => '',
 			'output' => array (),
 			'view' => '',
+			'header' => array (),
+			'formatter' => array (),
+			'no_record' => '',
+			'table_template' => array (),
 			'pagination_template' => array(),
 			'is_accessible' => TRUE
 		);
