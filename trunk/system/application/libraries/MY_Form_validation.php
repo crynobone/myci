@@ -261,7 +261,6 @@ class MY_Form_validation extends CI_Form_validation
 				$match = explode(':', $rule);
 				$rule	= 'expression';
 				$param	= $match[1];
-				error_log($param);
 			}
 			elseif (preg_match("/(.*?)\[(.*?)\]/", $rule, $match))
 			{
@@ -379,7 +378,6 @@ class MY_Form_validation extends CI_Form_validation
 	 */
 	function expression($str, $val)
 	{
-		error_log(( !! preg_match($val, $str) ? 'TRUE' : 'FALSE'));
 		return ( !! preg_match($val, $str) ? TRUE : FALSE);
 	}
 }
