@@ -4,6 +4,7 @@ class MY_Table extends CI_Table
 {
 	var $no_record 	= 'No record';
 	var $summary 	= array();
+	var $formatter 	= array();
 	
 	function clear()
 	{
@@ -11,6 +12,7 @@ class MY_Table extends CI_Table
 		$this->heading			= array();
 		$this->auto_heading		= TRUE;	
 		$this->summary			= array();
+		$this->formatter		= array();
 	}
 	
 	function generate($table_data = NULL)
@@ -59,13 +61,38 @@ class MY_Table extends CI_Table
 			$out .= $this->template['heading_row_start'];
 			$out .= $this->newline;		
 
-			foreach($this->heading as $heading)
+			foreach($this->heading as $heading_key => $heading_value)
 			{
-				$out .= $this->template['heading_cell_start'];
+				$heading = $heading_value;
+				$cell_start = trim($this->template['heading_cell_start']);
+				
+				if ( ! is_int($heading_key))
+				{
+					$cell_open = substr($cell_start, 0, 3);
+					$cell_close = substr($cell_start, 3);
+					
+					$attributes = $heading_value;
+					
+					if (is_array($attributes))
+					{
+						$atts = '';
+						foreach ($attributes as $key => $val)
+						{
+							$atts .= ' ' . $key . '="' . $val . '"';
+						}
+						
+						$attributes = $atts;
+					}
+					
+					$cell_start = sprintf('%s %s %s', $cell_open, $attributes, $cell_close);
+					$heading = $heading_key;
+				}
+				
+				$out .= $cell_start;
 				$out .= $heading;
 				$out .= $this->template['heading_cell_end'];
 			}
-
+			
 			$out .= $this->template['heading_row_end'];
 			$out .= $this->newline;				
 		}
@@ -87,9 +114,30 @@ class MY_Table extends CI_Table
 				$out .= $this->template['row_'.$name.'start'];
 				$out .= $this->newline;		
 	
-				foreach($row as $cell)
+				foreach($row as $key => $cell)
 				{
-					$out .= $this->template['cell_'.$name.'start'];
+					$cell_start = trim($this->template['cell_'.$name.'start']);
+					$cell_open = substr($cell_start, 0, 3);
+					$cell_close = substr($cell_start, 3);
+					
+					if (isset($this->formatter[$key]))
+					{
+						$attributes = $this->formatter[$key];
+						if (is_array($attributes))
+						{
+							$atts = '';
+							foreach ($attributes as $key => $val)
+							{
+								$atts .= ' ' . $key . '="' . $val . '"';
+							}
+							
+							$attributes = $atts;
+						}
+						
+						$cell_start = sprintf('%s %s %s', $cell_open, $attributes, $cell_close);
+					}
+					
+					$out .= $cell_start;
 					
 					if ($cell === "")
 					{
@@ -133,16 +181,24 @@ class MY_Table extends CI_Table
 	
 		return $out;
 	}
+	
 	function set_summary()
 	{
 		$args = func_get_args();
 		$this->summary = (is_array($args[0])) ? $args[0] : $args;
 	}
 	
+	function set_formatter()
+	{
+		$args = func_get_args();
+		$this->formatter = (is_array($args[0])) ? $args[0] : $args;
+	}
+
+	
 	function _default_template()
 	{
 		return  array (
-			'table_open' 			=> '<table class="fixed widefat">',
+			'table_open' 			=> '<table class="datagrid">',
 
 			'heading_row_start' 	=> '<tr class="thead">',
 			'heading_row_end' 		=> '</tr>',
@@ -169,4 +225,3 @@ class MY_Table extends CI_Table
 	}
 	
 }
-?>
