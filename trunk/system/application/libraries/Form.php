@@ -227,7 +227,7 @@ class Form {
 			// load field label for all fieldtype except hidden
 			if ($type !== 'hidden')
 			{
-				$html .= sprintf('<%s id="tr_%s" class="%s">', $template['group'], $name, $template['group_class']);
+				$html .= sprintf('<%s id="tr_%s" class="%s %s">', $template['group'], $name, $template['group_class'], $field['group_class']);
 				$html .= sprintf('<%s class="%s">%s</%s>', $template['label'], $template['label_class'], $field['name'], $template['label']);
 				$html .= sprintf('<%s class="%s">', $template['field'], $template['field_class']);
 			}
@@ -434,7 +434,8 @@ class Form {
 			"maxlength" => "",
 			"rule" => "",
 			"rows" => "4",
-			"xss" => FALSE
+			"xss" => FALSE,
+			"group_class" => ''
 		);
 		
 		return $result = array_merge($default, $field);
