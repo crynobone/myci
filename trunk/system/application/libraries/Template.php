@@ -169,7 +169,7 @@ class Template {
 		
 		if (in_array($part, $this->allowed)) 
 		{
-			$this->fragment[$part] = $content . $this->$part;
+			$this->fragment[$part] = $content . $this->fragment[$part];
 		}
 	}
 	
