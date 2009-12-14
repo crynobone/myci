@@ -40,7 +40,8 @@ class CRUD {
 		'enable_get' => TRUE,
 		'enable_set' => TRUE,
 		'enable_remove' => TRUE,
-		'404' => ''
+		'404' => '',
+		'auto_render' => TRUE
 	);
 	
 	/**
@@ -165,10 +166,11 @@ class CRUD {
 		$output = array (
 			'html' => array (
 				'datagrid' => '',
+				'records' => FALSE,
 				'data' => array (),
 				'pagination' => ''
 			),
-			'data' => array (),
+			'records' => FALSE,
 			'total_rows' => 0
 		);
 		
@@ -206,19 +208,27 @@ class CRUD {
 				$output['data'] = $datagrid['data'];
 				$output['total_rows'] = $datagrid['total_rows'];
 				
-				// clear table & set table header
-				$this->CI->table->clear();
-				if ( isset($datagrid['header']) && is_array($datagrid['header']))
-				{
-					$data['header'] = $datagrid['header'];
-				}
-				$this->CI->table->set_heading($data['header']);	
 				
-				if ( isset($datagrid['formatter']) && is_array($datagrid['formatter']))
+				if ($data['enable_table'] === TRUE)
 				{
-					$data['formatter'] = $datagrid['formatter'];
+					// clear table & set table
+					$this->CI->table->clear();
+					if ( isset($datagrid['header']) && is_array($datagrid['header']))
+					{
+						$data['header'] = $datagrid['header'];
+					}
+					$this->CI->table->set_heading($data['header']);	
+				
+					if ( isset($datagrid['formatter']) && is_array($datagrid['formatter']))
+					{
+						$data['formatter'] = $datagrid['formatter'];
+					}
+					
+					$this->CI->table->set_formatter($data['formatter']);
+					
+					// set table data
+					$output['html']['datagrid'] = $this->CI->table->generate($output['data']);
 				}
-				$this->CI->table->set_formatter($data['formatter']);
 				
 				// define pagination configuration
 				$config = array (
@@ -232,12 +242,13 @@ class CRUD {
 				// group pagination configuration & template
 				$config = array_merge($config, $data['pagination_template']);
 				
+				// generate pagination links
 				$this->CI->pagination->initialize($config);
-				
-				// generate table & pagination links
-				$output['html']['datagrid'] = $this->CI->table->generate($output['data']);
-				$output['html']['data'] = $output['data'];
 				$output['html']['pagination'] = $this->CI->pagination->create_links();
+				
+				// paste certain information for additional use
+				$output['html']['data'] = $output['data'];
+				$output['records'] = $output['html']['records'] = $output['records'];
 			}
 			else 
 			{
@@ -256,16 +267,15 @@ class CRUD {
 		// extends output to global var
 		$this->output = $output;
 		
-		
 		if ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
 		{
 			// output as an XHR callback
-			$this->CI->{$data['callback_xhr']}($output['html'], $output['data'], $output['total_rows']);
+			$this->CI->{$data['callback_xhr']}($output['html'], $output['records'], $output['total_rows']);
 		}
 		elseif ( !! method_exists($this->CI, $data['callback']))
 		{
 			// output to a method in Controller
-			$this->CI->{$data['callback']}($output['html'], $output['data'], $output['total_rows']);
+			$this->CI->{$data['callback']}($output['html'], $output['records'], $output['total_rows']);
 		}
 		elseif ( trim($data['view']) !== '')
 		{
@@ -448,7 +458,9 @@ class CRUD {
 			// view file is set, try to initiate
 			$this->_callback_viewer(array (), $data['output'], $view);
 		}
-		elseif ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $xhr))
+		elseif ($this->data['segment_xhr'] > 0 
+			&& $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' 
+			&& !! method_exists($this->CI, $xhr))
 		{
 			// differentiate XHR/Ajax request
 			$this->CI->{$xhr}($output['response']);
@@ -497,6 +509,7 @@ class CRUD {
 			'header' => array (),
 			'formatter' => array (),
 			'no_record' => '',
+			'enable_table' => TRUE,
 			'table_template' => array (),
 			'pagination_template' => array(),
 			'is_accessible' => TRUE
@@ -563,7 +576,7 @@ class CRUD {
 	{
 		$model = 'model';
 		
-		if ( trim($this->data['model']) !== '')
+		if (trim($this->data['model']) !== '')
 		{
 			$model = $this->data['model'];
 		}
@@ -579,7 +592,8 @@ class CRUD {
 			'is_accessible' => TRUE
 		);
 		
-		if ( ! isset($data['id']) && $this->data['segment_id'] > 0)
+		if ( ! isset($data['id']) 
+			&& $this->data['segment_id'] > 0)
 		{
 			$data['id'] = $this->CI->uri->segment($this->data['segment_id'], 0);
 		}

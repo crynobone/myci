@@ -37,12 +37,16 @@ class Form {
 		'fieldset_class' => '',
 		'group' => 'div',
 		'group_class' => 'fields',
+		'heading' => 'div',
+		'heading_class' => 'heading',
 		'label' => 'label',
 		'label_class' => 'label_field',
 		'field' => 'div',
 		'field_class' => 'input_field',
 		'radio' => 'div',
 		'radio_class' => 'radio_field',
+		'submit' => 'div',
+		'submit_class' => 'buttons',
 		'error' => 'div',
 		'error_class' => 'errorbox'
 	);
@@ -99,6 +103,7 @@ class Form {
 		{
 			$this->fields[$id] = array ();
 		}
+		
 		$this->fields[$id] = array_merge($this->fields[$id], $fields);
 	}
 	
@@ -169,6 +174,9 @@ class Form {
 	{
 		$this->vars($options, $id);
 		
+		$run = FALSE;
+		$form_submit = 'Submit';
+		
 		$validate = $this->validate;
 		$template = $this->template;
 		
@@ -187,23 +195,30 @@ class Form {
 		}
 		
 		$hidden_html = '';
-		$final_html = sprintf('<%s class="%s">', $template['fieldset'], $template['fieldset_class']);
+		$final_html = sprintf(
+			'<%s class="%s">', 
+			$template['fieldset'], 
+			$template['fieldset_class']
+		);
 		
-		// configure form validation rules
-		foreach ($fields as $field) 
+		if ( !! $is_form && $this->CI->input->post($pre . '_form_submit') != FALSE)
 		{
-			$field = $this->_prepare_field($field);
-			$name = $pre . $field['id'];
-			
-			if ( !! $is_form)
+			// configure form validation rules
+			foreach ($fields as $field) 
 			{
-				$rule = str_replace('matches[', 'matches['.$pre, $field['rule']);
-				$this->CI->form_validation->set_rules($name, $field['name'], $rule);
+				$field = $this->_prepare_field($field);
+				$name = $pre . $field['id'];
+				
+				if ( !! $is_form)
+				{
+					$rule = str_replace('matches[', 'matches['.$pre, $field['rule']);
+					$this->CI->form_validation->set_rules($name, $field['name'], $rule);
+				}
 			}
+			
+			// run the form validation
+			$run = $this->CI->form_validation->run();
 		}
-		
-		// run the form validation
-		$run = $this->CI->form_validation->run();
 		
 		foreach ($fields as $field) 
 		{
@@ -212,6 +227,7 @@ class Form {
 			
 			// each field need to have minimum set of data to avoid PHP errors, in case you didn't add
 			$field = $this->_prepare_field($field);
+			
 			// type need to be lowercase
 			$type = strtolower($field['type']);
 			
@@ -224,11 +240,33 @@ class Form {
 				$type = 'select';
 			}
 			
-			// load field label for all fieldtype except hidden
-			if ($type !== 'hidden')
+			// load field label for all fieldtype except hidden, form_submit and heading
+			if ($type == 'heading') 
 			{
-				$html .= sprintf('<%s id="tr_%s" class="%s %s">', $template['group'], $name, $template['group_class'], $field['group_class']);
-				$html .= sprintf('<%s class="%s">%s</%s>', $template['label'], $template['label_class'], $field['name'], $template['label']);
+				$html .= sprintf(
+					'<%s class="%s" %s>',
+					$template['heading'],
+					$template['heading_class'],
+					(in_array($template['heading'], array('td', 'th'), FALSE) ? 'colspan="2"' : '')
+				);
+			}
+			elseif ( ! in_array($type, array('hidden', 'form_submit')))
+			{
+				$html .= sprintf(
+					'<%s id="tr_%s" class="%s %s">', 
+					$template['group'], 
+					$name, 
+					$template['group_class'], 
+					$field['group_class']
+				);
+				$html .= sprintf(
+					'<%s class="%s" %s>%s</%s>', 
+					$template['label'], 
+					$template['label_class'],
+					($template['label'] == 'label' ? 'for="' . $name . '"' : ''), 
+					$field['name'], 
+					$template['label']
+				);
 				$html .= sprintf('<%s class="%s">', $template['field'], $template['field_class']);
 			}
 			
@@ -258,7 +296,7 @@ class Form {
 							'name' => $name,
 							'id' => $name,
 							'value' => form_prep($value),
-							'class' => $field['class'],
+							'class' => trim($field['class']) . ' form_password',
 							'maxlength' => $field['maxlength']
 						));
 						break;
@@ -267,7 +305,7 @@ class Form {
 							'name' => $name,
 							'id' => $name,
 							'value' => form_prep($value),
-							'class' => $field['class']
+							'class' => trim($field['class']) . ' form_upload'
 						));
 						break;
 					case 'textarea' :
@@ -276,7 +314,7 @@ class Form {
 							'id' => $name,
 							'value' => form_prep($value),
 							'rows' => $field['rows'],
-							'class' => $field['class'],
+							'class' => trim($field['class']) . ' form_textarea',
 							'maxlength' => $field['maxlength']
 						));
 						break;
@@ -285,7 +323,10 @@ class Form {
 							$name,
 							$field['options'],
 							$value,
-							'id="' . $name . '" class="' . $field['class'] . '"'
+							array (
+								'id' => $name,
+								'class' => trim($field['class']) . ' form_dropdown'
+							)
 						);
 						break;
 					
@@ -301,7 +342,7 @@ class Form {
 								'name' => $name,
 								'value' => form_prep($key),
 								'checked' => ($value == $key ? TRUE : FALSE),
-								'class' => $field['class']
+								'class' => trim($field['class']) . ' form_radio'
 							));
 							$html .= form_label($val, $radio_name);
 							
@@ -315,6 +356,9 @@ class Form {
 						break;
 					case 'readonly' :
 						$html .= $value;
+						break;
+					case 'heading' :
+						$html .= $field['name'];
 						break;
 					case 'checkbox' :
 						
@@ -330,7 +374,7 @@ class Form {
 							'name' => $name,
 							'value' => form_prep('true'),
 							'checked' => $checked,
-							'class' => $field['class']
+							'class' => trim($field['class']) . ' form_checkbox'
 						));
 						$html .= form_label($field['desc'], $name);
 						break;
@@ -347,25 +391,27 @@ class Form {
 								'name' => $name . '[]',
 								'value' => form_prep($key),
 								'checked' => (in_array($key, $value) ? TRUE : FALSE),
-								'class' => $field['class']
+								'class' => trim($field['class']) . ' form_checkbox'
 							));
 							$html .= form_label($val, $name);
 							
 							$html .= sprintf('</%s>', $template['radio']);
 						}
 						break;
+					case 'form_submit' :
+						$form_submit = $field['name'];
 					default :
 						$html .= form_input(array (
 							'name' => $name,
 							'id' => $name,
 							'value' => form_prep($value),
-							'class' => $field['class'],
+							'class' => trim($field['class']) . ' form_input',
 							'maxlength' => $field['maxlength']
 						));
 						break;
 				}
 			
-				if ( ! in_array($type, array('hidden')))
+				if ( ! in_array($type, array('hidden', 'heading', 'form_submit')))
 				{
 					if ($type !== 'custom' && trim($field['html']) !== '')
 					{
@@ -384,7 +430,12 @@ class Form {
 				}
 			}
 			
-			$html .= sprintf('</%s></%s>', $template['field'], $template['group']);
+			$html .= sprintf(
+				'</%s></%s>', 
+				($type !== 'heading' ? $template['field'] : $template['heading']),
+				$template['group']
+			);
+			
 			
 			if ( ! in_array($type, array('hidden')))
 			{
@@ -398,6 +449,20 @@ class Form {
 			}
 			
 			$this->value[$id][$field['id']] = $value;
+		}
+		
+		// add a submit button for form
+		if ( !! $is_form)
+		{
+			$html .= sprintf(
+				'<%s class="%s" %s>',
+				$template['button'],
+				$template['button_class'],
+				(in_array($template['heading'], array('td', 'th'), FALSE) ? 'colspan="2"' : '')
+			);
+			$html .= form_submit($pre . '_form_submit', $form_submit);
+			$html .= sprintf('</%s></%s>', $template['button'], $template['group']);
+			
 		}
 		
 		$final_html .= sprintf('</%s>', $template['fieldset']);
@@ -435,7 +500,7 @@ class Form {
 			"rule" => "",
 			"rows" => "4",
 			"xss" => FALSE,
-			"group_class" => ''
+			"group_class" => ""
 		);
 		
 		return $result = array_merge($default, $field);
