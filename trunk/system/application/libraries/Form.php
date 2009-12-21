@@ -8,7 +8,7 @@
  * @category  CodeIgniter
  * @package   Form CI
  * @author    Mior Muhammad Zaki (hello@crynobone.com)
- * @version   0.1
+ * @version   0.1.1
  * Copyright (c) 2009 Mior Muhammad Zaki  (http://crynobone.com)
  * Licensed under the MIT.
 */
@@ -33,22 +33,20 @@ class Form {
 	
 	// default template
 	var $template = array (
-		'fieldset' => 'fieldset',
-		'fieldset_class' => '',
-		'group' => 'div',
+		'fieldset' => 'table',
+		'fieldset_class' => 'formgrid',
+		'group' => 'tr',
 		'group_class' => 'fields',
-		'heading' => 'div',
 		'heading_class' => 'heading',
-		'label' => 'label',
+		'label' => 'td',
 		'label_class' => 'label_field',
-		'field' => 'div',
+		'field' => 'td',
 		'field_class' => 'input_field',
 		'radio' => 'div',
 		'radio_class' => 'radio_field',
-		'submit' => 'div',
-		'submit_class' => 'buttons',
+		'button_class' => 'buttons',
 		'error' => 'div',
-		'error_class' => 'errorbox'
+		'error_class' => 'error_box'
 	);
 	
 	/**
@@ -176,6 +174,7 @@ class Form {
 		
 		$run = FALSE;
 		$form_submit = 'Submit';
+		$form_buttons = array ();
 		
 		$validate = $this->validate;
 		$template = $this->template;
@@ -209,7 +208,8 @@ class Form {
 				$field = $this->_prepare_field($field);
 				$name = $pre . $field['id'];
 				
-				if ( !! $is_form)
+				// disable adding rule if it not a form or readonly
+				if ( !! $is_form || $field['type'] != 'readonly')
 				{
 					$rule = str_replace('matches[', 'matches['.$pre, $field['rule']);
 					$this->CI->form_validation->set_rules($name, $field['name'], $rule);
@@ -245,42 +245,57 @@ class Form {
 			{
 				$html .= sprintf(
 					'<%s class="%s" %s>',
-					$template['heading'],
+					$template['label'],
 					$template['heading_class'],
-					(in_array($template['heading'], array('td', 'th'), FALSE) ? 'colspan="2"' : '')
+					(in_array($template['label'], array('td', 'th'), FALSE) ? 'colspan="2"' : '')
 				);
 			}
 			elseif ( ! in_array($type, array('hidden', 'form_submit')))
 			{
-				$html .= sprintf(
-					'<%s id="tr_%s" class="%s %s">', 
-					$template['group'], 
-					$name, 
-					$template['group_class'], 
-					$field['group_class']
-				);
-				$html .= sprintf(
-					'<%s class="%s" %s>%s</%s>', 
-					$template['label'], 
-					$template['label_class'],
-					($template['label'] == 'label' ? 'for="' . $name . '"' : ''), 
-					$field['name'], 
-					$template['label']
-				);
-				$html .= sprintf('<%s class="%s">', $template['field'], $template['field_class']);
+				if ( ! ( ! $is_form && $type === 'password')) :
+					$html .= sprintf(
+						'<%s id="tr_%s" class="%s %s">', 
+						$template['group'], 
+						$name, 
+						$template['group_class'], 
+						$field['group_class']
+					);
+					$html .= sprintf(
+						'<%s class="%s" %s>%s</%s>', 
+						$template['label'], 
+						$template['label_class'],
+						($template['label'] == 'label' ? 'for="' . $name . '"' : ''), 
+						($template['label'] == 'label' ? $field['name'] : form_label($field['name'], $name)), 
+						$template['label']
+					);
+					$html .= sprintf('<%s class="%s">', $template['field'], $template['field_class']);
+				endif;
 			}
 			
 			$value = $this->_pick_standard($name, $field, $alt);
 			
 			if ( ! $is_form) 
 			{
-				if ( ! in_array($type, array('hidden')))
+				if ( ! in_array($type, array('hidden', 'password')))
 				{
-					$html .= $value;
-				
-					if (trim($field['display']) !== '')
+					$display_value = $value;
+					
+					if (isset($field['refer_to']) && isset($alt[$field['refer_to']]))
 					{
-						$html .= $field['display'];
+						$display_value = $alt[$field['refer_to']];
+					}
+					
+					if (trim($field['sprintf']) == '')
+					{
+						$html .= $display_value;
+					}
+					else {
+						$html .= sprintf($field['sprintf'], $display_value);
+					}
+					
+					if ( ! in_array($type, array('checkbox', 'radio', 'readonly'))) 
+					{
+						$html .= sprintf('<em>%s</em>',  $field['desc']);
 					}
 				}
 			}
@@ -323,10 +338,7 @@ class Form {
 							$name,
 							$field['options'],
 							$value,
-							array (
-								'id' => $name,
-								'class' => trim($field['class']) . ' form_dropdown'
-							)
+							'id="' . $name . '" class="' . trim($field['class']) . ' form_dropdown"'
 						);
 						break;
 					
@@ -355,7 +367,14 @@ class Form {
 						$html .= $field['html'];
 						break;
 					case 'readonly' :
-						$html .= $value;
+						if (trim($field['sprintf']) == '')
+						{
+							$html .= $value;
+						}
+						else {
+							$html .= sprintf($field['sprintf'], $value);
+						}
+						$hidden .= form_hidden($name, $value);
 						break;
 					case 'heading' :
 						$html .= $field['name'];
@@ -400,6 +419,7 @@ class Form {
 						break;
 					case 'form_submit' :
 						$form_submit = $field['name'];
+						break;
 					default :
 						$html .= form_input(array (
 							'name' => $name,
@@ -418,7 +438,7 @@ class Form {
 						$html .= $field['html'];
 					}
 					
-					if ( ! in_array($type, array('checkbox', 'radio'))) 
+					if ( ! in_array($type, array('checkbox', 'radio', 'readonly'))) 
 					{
 						$html .= sprintf('<em>%s</em>',  $field['desc']);
 						$html .= form_error(
@@ -430,14 +450,20 @@ class Form {
 				}
 			}
 			
-			$html .= sprintf(
-				'</%s></%s>', 
-				($type !== 'heading' ? $template['field'] : $template['heading']),
-				$template['group']
-			);
+			if ( ! in_array($type, array('hidden', 'form_submit')))
+			{
+				if ( ! ( ! $is_form && $type !== 'password'))
+				{
+					$html .= sprintf(
+						'</%s></%s>', 
+						($type !== 'heading' ? $template['field'] : $template['heading']),
+						$template['group']
+					);
+				}
+			}
 			
 			
-			if ( ! in_array($type, array('hidden')))
+			if ( ! in_array($type, array('hidden', 'readonly')))
 			{
 				$this->output[$id][$field['id']] = $html;
 				$final_html .= $html;
@@ -446,6 +472,11 @@ class Form {
 			{
 				$this->output[$id][$field['id']] = $hidden;
 				$hidden_html .= $hidden;
+				
+				if ($type === 'readonly')
+				{
+					$final_html .= $html;
+				}
 			}
 			
 			$this->value[$id][$field['id']] = $value;
@@ -454,14 +485,14 @@ class Form {
 		// add a submit button for form
 		if ( !! $is_form)
 		{
-			$html .= sprintf(
+			$final_html .= sprintf(
 				'<%s class="%s" %s>',
-				$template['button'],
+				$template['label'],
 				$template['button_class'],
-				(in_array($template['heading'], array('td', 'th'), FALSE) ? 'colspan="2"' : '')
+				(in_array($template['label'], array('td', 'th'), FALSE) ? 'colspan="2"' : '')
 			);
-			$html .= form_submit($pre . '_form_submit', $form_submit);
-			$html .= sprintf('</%s></%s>', $template['button'], $template['group']);
+			$final_html .= form_submit($pre . '_form_submit', $form_submit, 'class="form_submit"');
+			$final_html .= sprintf('</%s></%s>', $template['label'], $template['group']);
 			
 		}
 		
@@ -500,7 +531,10 @@ class Form {
 			"rule" => "",
 			"rows" => "4",
 			"xss" => FALSE,
-			"group_class" => ""
+			"group_class" => "",
+			"refer_to" => "",
+			"sprintf" => "",
+			"allow_cache" => TRUE
 		);
 		
 		return $result = array_merge($default, $field);

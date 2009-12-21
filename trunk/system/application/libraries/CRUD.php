@@ -8,17 +8,21 @@
  * @category  CodeIgniter
  * @package   CRUD CI
  * @author    Mior Muhammad Zaki (hello@crynobone.com)
- * @version   0.1
+ * @version   0.1.1
  * Copyright (c) 2009 Mior Muhammad Zaki  (http://crynobone.com)
  * Licensed under the MIT.
 */
 
 class CRUD {
 	// CI Singleton
-	var $CI = NULL;
+	private $CI = NULL;
+	
+	private $_id = 0;
+	private $_type = 'get';
+	private $_format = 'http';
 	
 	// set default modify/delete response
-	var $default_response = array (
+	private $_default_response = array (
 		'success' => FALSE,
 		'redirect' => '',
 		'error' => '',
@@ -26,10 +30,10 @@ class CRUD {
 	);
 	
 	// Allow output to be access
-	var $output = array ();
+	public $data = array ();
 	
 	// set global configuration variables for CRUD
-	var $data = array (
+	public $config = array (
 		'get' => array (),
 		'set' => array (),
 		'remove' => array (),
@@ -41,6 +45,7 @@ class CRUD {
 		'enable_set' => TRUE,
 		'enable_remove' => TRUE,
 		'404' => '',
+		'enable_ui' => TRUE,
 		'auto_render' => TRUE
 	);
 	
@@ -50,7 +55,7 @@ class CRUD {
 	 * @access		public
 	 * @return 		void
 	 */
-	function CRUD()
+	public function __construct()
 	{
 		// load CI object
 		$this->CI =& get_instance();
@@ -73,18 +78,18 @@ class CRUD {
 	 * @param object $data [optional]
 	 * @return 
 	 */
-	function initialize($data = array ())
+	public function initialize($config = array ())
 	{
 		// extends configurator
-		$this->data = array_merge($this->data, $data);
+		$this->vars($config);
 		
-		// get actually uri segment, useful when you are configuring in _remap method
-		$segment = $this->CI->uri->segment($this->data['segment'], '');
+		// configure based on uri segment, enable autoloading via _remap method
+		$segment = $this->_get_access();
 		
 		// set all possible uri segment value
 		$is_get = array ('get', 'index', '');
 		$is_set = array ('set', 'modify', 'write');
-		$is_get_one = array ('display', 'get_one');
+		$is_get_one = array ('get_one', 'detail');
 		$is_remove = array ('delete', 'remove');
 		$send_to = '';
 		
@@ -106,7 +111,7 @@ class CRUD {
 				if ( !! method_exists($this->CI, $segment))
 				{
 					// method not found but Controller contain this method
-					$this->CI->$segment();
+					$this->CI->{$segment}();
 				}
 				else 
 				{
@@ -121,6 +126,11 @@ class CRUD {
 		}
 	}
 	
+	public function vars($config = array ())
+	{
+		$this->config = array_merge($this->config, $config);
+	}
+	
 	/**
 	 * Generate the CRUD
 	 * 
@@ -128,7 +138,7 @@ class CRUD {
 	 * @param object $option [optional]
 	 * @return 
 	 */
-	function generate($type = 'get')
+	public function generate($type = 'get')
 	{
 		$allowed = array ('get', 'get_one', 'set', 'remove');
 		$type_data = $type = trim(strtolower($type));
@@ -141,11 +151,12 @@ class CRUD {
 		// first we need to check whether it's pointing to valid method
 		if ( !! in_array($type, $allowed))
 		{
-			$this->{$type}($this->data[$type_data]);
+			$this->{$type}($this->config[$type_data]);
 		}
 		else 
 		{
 			log_message('error', 'CRUD: Unable to determine request ' . $type);
+			
 			// 404 using CRUD callback
 			$this->_callback_404();
 		}
@@ -154,20 +165,23 @@ class CRUD {
 	/**
 	 * 
 	 * @param object $data [optional]
+	 * @access public
 	 * @return 
 	 */
-	function get($data = array ())
+	public function get($config = array ())
 	{
 		// prepare configuration variable
-		$data = $this->_prepare_get($data);
-		$datagrid = NULL;
+		$config = $this->_prepare_get($config);
+		
+		$datagrid = array ();
+		
+		$this->_set_type('set');
 		
 		// output template for this method
-		$output = array (
-			'html' => array (
+		$data = array (
+			'output' => array (
 				'datagrid' => '',
 				'records' => FALSE,
-				'data' => array (),
 				'pagination' => ''
 			),
 			'records' => FALSE,
@@ -175,80 +189,88 @@ class CRUD {
 		);
 		
 		// try to set table template when included
-		$table_template = $data['table_template'];
-		if (is_array($table_template) && count($table_template))
+		$template = $config['table_template'];
+		if (is_array($template) && count($template))
 		{
-			$this->CI->table->set_template($table_template);
+			$this->CI->table->set_template($template);
 		}
 		
 		// show 404 if access to method is revoke
-		if ( ! $data['is_accessible'] && !! $this->data['enable_get'])
+		if ( ! $config['is_accessible'] && !! $this->config['enable_get'])
 		{
 			return $this->_callback_404();
 		}
 		
-		$model = $data['model'];
-		$method = $data['method'];
+		$model = $config['model'];
+		$method = $config['method'];
 		
 		if ( !! property_exists($this->CI, $model))
 		{
 			if ( !! method_exists($this->CI->{$model}, $method))
 			{
 				// get data from method
-				$datagrid = $this->CI->{$model}->{$method}(
-					$data['limit'], 
-					$data['offset']
+				$grid = $this->CI->{$model}->{$method}(
+					$config['limit'], 
+					$config['offset'],
+					array (
+						'header' => array(),
+						'total_rows' => 0,
+						'data' => array (),
+						'cols' => array (),
+						'records' => FALSE
+					)
 				);
 				
-				$datagrid = $this->_args_to_array(
-					$datagrid, 
-					array('data', 'total_rows', 'header', 'formatter')
+				$grid = $this->_args_to_array(
+					$grid, 
+					array('data', 'total_rows', 'header', 'cols', 'records')
 				);
 				
-				$output['data'] = $datagrid['data'];
-				$output['total_rows'] = $datagrid['total_rows'];
+				$datagrid = $grid['data'];
+				$data['total_rows'] = $grid['total_rows'];
 				
-				
-				if ($data['enable_table'] === TRUE)
+				if ($config['enable_table'] === TRUE)
 				{
+					$header = $config['header'];
+					$cols = $config['cols'];
+					
+					if ( isset($grid['header']) && is_array($grid['header']))
+					{
+						$header = $grid['header'];
+					}
+					
+					if ( isset($grid['cols']) && is_array($grid['cols']))
+					{
+						$cols = $grid['cols'];
+					}
+					
 					// clear table & set table
 					$this->CI->table->clear();
-					if ( isset($datagrid['header']) && is_array($datagrid['header']))
-					{
-						$data['header'] = $datagrid['header'];
-					}
-					$this->CI->table->set_heading($data['header']);	
-				
-					if ( isset($datagrid['formatter']) && is_array($datagrid['formatter']))
-					{
-						$data['formatter'] = $datagrid['formatter'];
-					}
-					
-					$this->CI->table->set_formatter($data['formatter']);
+					$this->CI->table->set_heading($header);
+					$this->CI->table->set_cols($cols);
 					
 					// set table data
-					$output['html']['datagrid'] = $this->CI->table->generate($output['data']);
+					$data['output']['datagrid'] = $this->CI->table->generate($datagrid);
 				}
 				
 				// define pagination configuration
-				$config = array (
-					'base_url' => $data['base_url'],
-					'total_rows' => $output['total_rows'],
-					'per_page' => $data['limit'],
-					'cur_page' => $data['offset'],
-					'suffix_url' => $data['suffix_url']
+				$pagination_config = array (
+					'base_url' => $config['base_url'],
+					'total_rows' => $data['total_rows'],
+					'per_page' => $config['limit'],
+					'cur_page' => $config['offset'],
+					'suffix_url' => $config['suffix_url']
 				);
 				
 				// group pagination configuration & template
-				$config = array_merge($config, $data['pagination_template']);
+				$pagination_config = array_merge($pagination_config, $config['pagination_template']);
 				
 				// generate pagination links
-				$this->CI->pagination->initialize($config);
-				$output['html']['pagination'] = $this->CI->pagination->create_links();
+				$this->CI->pagination->initialize($pagination_config);
+				$data['output']['pagination'] = $this->CI->pagination->create_links();
 				
 				// paste certain information for additional use
-				$output['html']['data'] = $output['data'];
-				$output['records'] = $output['html']['records'] = $output['records'];
+				$data['records'] = $data['output']['records'] = $grid['records'];
 			}
 			else 
 			{
@@ -265,87 +287,137 @@ class CRUD {
 		}
 		
 		// extends output to global var
-		$this->output = $output;
+		$this->data = $data;
 		
-		if ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
+		$callback_xhr = $config['callback_xhr'];
+		$callback = $config['callback'];
+		$view = $config['view'];
+		
+		if ($this->is_format_xhr() && !! method_exists($this->CI, $callback_xhr))
 		{
 			// output as an XHR callback
-			$this->CI->{$data['callback_xhr']}($output['html'], $output['records'], $output['total_rows']);
+			$this->CI->{$callback_xhr}(
+				$data['output'], 
+				$data['records'], 
+				$data['total_rows']
+			);
 		}
-		elseif ( !! method_exists($this->CI, $data['callback']))
+		elseif ( !! method_exists($this->CI, $callback))
 		{
 			// output to a method in Controller
-			$this->CI->{$data['callback']}($output['html'], $output['records'], $output['total_rows']);
+			$this->CI->{$callback}(
+				$data['output'], 
+				$data['records'], 
+				$data['total_rows']
+			);
 		}
-		elseif ( trim($data['view']) !== '')
+		elseif (trim($view) !== '')
 		{
 			// output using CRUD viewer
-			$this->_callback_viewer($output['html'], $data['output'], $data['view']);
+			$this->_callback_viewer($data['output'], $config);
 		}
 		else 
 		{
 			// return the data
-			return $output;
+			return $data;
 		}
 		
 	}
 	
-	function get_one($data = array())
+	function get_one($config = array())
 	{
-		return $this->set($data, FALSE);
+		return $this->set($config, FALSE);
 	}
 	
-	function form($data = array ())
+	function form($config = array ())
 	{
-		return $this->set($data);
+		return $this->set($config, TRUE);
 	}
 	
-	function set($data = array(), $is_form = TRUE)
+	function set($config = array(), $is_form = TRUE)
 	{
-		$data = $this->_prepare_set($data);
-		$output = array (
-			'html' => array (
+		$config = $this->_prepare_set($config);
+		
+		$this->_set_id($config['id']);
+		$this->_set_type( !$is_form ? 'get_one' : 'set');
+		
+		$data = array (
+			'output' => array (
 				'form' => '',
+				'form_open' => '',
+				'form_close' => '',
+				'datagrid' => '',
 				'fields' => array (),
 				'error' => '',
 				'value' => array ()
 			), 
-			'response' => $this->default_response
+			'result' => FALSE,
+			'response' => $this->_default_response
 		);
 		
-		// try to set form template when included
-		$form_template = $data['form_template'];
-		if (is_array($form_template) && count($form_template))
+		if ( !! $is_form)
 		{
-			$this->CI->form->set_template($form_template);
+			$data['output']['form_open'] = form_open($config['action']);
+			
+			if ($config['multipart'] === TRUE)
+			{
+				$data['output']['form_open']= form_open_multipart($config['action']);
+			}
+			
+			$data['output']['form_close'] = form_close();
+		}
+		
+		// try to set form template when included
+		$template = $config['form_template'];
+		
+		if (is_array($template) && count($template))
+		{
+			$this->CI->form->set_template($template);
 		}
 		
 		// stop processing if method access to off
-		if ( ! $data['is_accessible'] || ! $this->data['enable_set'])
+		if ( ! $config['is_accessible'] || ! $this->config['enable_set'])
 		{
 			return $this->_callback_404();
 		}
 		
-		if ( !! property_exists($this->CI, $data['model']))
+		$model = $config['model'];
+		$method = $config['method'];
+		
+		if ( !! property_exists($this->CI, $model))
 		{
-			$data['fields'] = $this->_organizer($data, 'fields');
-			$data['data'] = $this->_organizer($data, 'data');
+			$config['fields'] = $this->_organizer($config, 'fields');
+			$config['data'] = $this->_organizer($config, 'data');
 			
-			if (is_array($data['fields']) && count($data['fields']) > 0)
+			if (is_array($config['fields']) && count($config['fields']) > 0)
 			{
-				$output['html']['form'] = $this->CI->form->generate($data['fields'], $data['prefix'], $data['data'], $is_form);
-				$output['html']['fields'] = $this->CI->form->output[$data['prefix']];
-				$output['html']['value'] =  $this->CI->form->value[$data['prefix']];
+				$data['output']['form'] = $this->CI->form->generate(
+					$config['fields'], 
+					$config['prefix'], 
+					$config['data'], 
+					$is_form
+				);
+				$data['output']['fields'] = $this->CI->form->output[$config['prefix']];
+				$data['output']['value'] =  $this->CI->form->value[$config['prefix']];
 				
-				if ( !! $this->CI->form->run($data['prefix']))
+				if ( !! $is_form)
 				{
-					$result = $this->CI->form->result($data['prefix']);
+					$data['output']['datagrid'] = $data['output']['form_open'];
+					$data['output']['datagrid'] .= $data['output']['form'];
+					$data['output']['datagrid'] .= $data['output']['form_close'];
+				}
+				else 
+				{
+					$data['output']['datagrid'] = $data['output']['form'];
+				}
+				
+				if ( !! $this->CI->form->run($config['prefix']))
+				{
+					$data['result'] = $result = $this->CI->form->result($config['prefix']);
 					
-					$data['result'] = $result;
-					
-					if ( !! method_exists($this->CI->{$data['model']}, $data['method']))
+					if ( !! method_exists($this->CI->{$model}, $method))
 					{
-						$output['response'] = $this->CI->{$data['model']}->{$data['method']}($result, $this->default_response);
+						$data['response'] = $this->CI->{$model}->{$method}($result, $this->_default_response);
 					}
 					else 
 					{
@@ -353,17 +425,17 @@ class CRUD {
 						return $this->_callback_404();
 					}
 					
-					if ($output['response']['success'] === TRUE && trim($output['response']['redirect']) !== '')
+					if ($data['response']['success'] === TRUE && trim($data['response']['redirect']) !== '')
 					{
-						redirect($output['response']['redirect']);
+						redirect($data['response']['redirect']);
 					} 						
-					elseif ($output['response']['success'] === FALSE) 
+					elseif ($data['response']['success'] === FALSE) 
 					{
-						$output['html']['error'] = sprintf(
+						$data['output']['error'] = sprintf(
 							'<%s class="%s">%s</%s>',
 							$this->CI->form->template['error'],
 							$this->CI->form->template['error_class'],
-							$output['response']['error'],
+							$data['response']['error'],
 							$this->CI->form->template['error']
 						);
 					}
@@ -377,23 +449,35 @@ class CRUD {
 			log_message('error', 'CRUD: cannot locate Application model class');
 			return $this->_callback_404();
 		}
-			
-		if ( trim($data['view']) !== '')
+		
+		// extends output to global var
+		$this->data = $data;
+		
+		$callback = $config['callback'];
+		$callback_xhr = $config['callback_xhr'];
+		$view = $config['view'];
+		
+		if ($this->is_format_xhr() && !! method_exists($this->CI, $callback_xhr))
 		{
-			$this->_callback_viewer($output['html'], $data['output'], $data['view']);
+			// output as an XHR callback
+			$this->CI->{$callback_xhr}($data['output'], $data['response']);
 		}
-		elseif ( !! method_exists($this->CI, $data['callback']))
+		elseif ( !! method_exists($this->CI, $callback))
 		{
-			$this->CI->{$data['callback']}($output['html'], $output['response']);
+			// output to a method in Controller
+			$this->CI->{$callback}($data['output'], $data['response']);
 		}
-		elseif ($this->data['segment_xhr'] > 0 && $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' && !! method_exists($this->CI, $data['callback_xhr']))
+		elseif ( trim($view) !== '')
 		{
-			$this->CI->{$data['callback_xhr']}($output['html'], $output['response']);
+			// output using CRUD viewer
+			$this->_callback_viewer($data['output'], $config);
 		}
 		else 
 		{
-			return $output;
+			// return the data
+			return $data;
 		}
+		
 	}
 	
 	/**
@@ -403,33 +487,37 @@ class CRUD {
 	 * @param object $data [optional]
 	 * @return 
 	 */
-	function remove($data = array())
+	public function remove($config = array())
 	{
 		// prepare configuration
-		$data = $this->_prepare_remove($data);
-		$model = $data['model'];
-		$method = $data['method'];
+		$config = $this->_prepare_remove($config);
+		
+		$model = $config['model'];
+		$method = $config['method'];
+		
+		$this->_set_id($config['id']);
+		$this->_set_type('remove');
 		
 		// default response value
-		$output = array (
-			'response' => $this->default_response
+		$data = array (
+			'response' => $this->_default_response
 		);
 		
 		// disable access: useful when user doesn't have ACL access
-		if ( ! $data['is_accessible'] && !! $this->data['enabled_remove'])
+		if ( ! $config['is_accessible'] && !! $this->config['enabled_remove'])
 		{
 			return $this->_callback_404();
 		}
 		
 		if ( !! property_exists($this->CI, $model))
 		{
-			$response = $output['response'];
+			$response = $data['response'];
 			
 			if ( !! method_exists($this->CI->{$model}, $method))
 			{
 				// get return value from delete method
 				// response should be based from $this->default_response
-				$response = $output['response'] = $this->CI->{$model}->{$method}($data['id'], $response);
+				$response = $data['response'] = $this->CI->{$model}->{$method}($config['id'], $response);
 			}
 			else 
 			{
@@ -449,33 +537,34 @@ class CRUD {
 			return $this->_callback_404();
 		}
 		
-		$callback = $data['callback'];
-		$view = $data['view'];
-		$xhr = $data['callback_xhr'];
- 		
-		if ( trim($view) !== '')
+		// extends output to global var
+		$this->data = $data;
+		
+		$callback = $config['callback'];
+		$callback_xhr = $config['callback_xhr'];
+		$view = $config['view'];
+		
+		if ($this->is_format_xhr() && !! method_exists($this->CI, $callback_xhr))
 		{
-			// view file is set, try to initiate
-			$this->_callback_viewer(array (), $data['output'], $view);
-		}
-		elseif ($this->data['segment_xhr'] > 0 
-			&& $this->CI->uri->segment($this->data['segment_xhr'], '') == 'xhr' 
-			&& !! method_exists($this->CI, $xhr))
-		{
-			// differentiate XHR/Ajax request
-			$this->CI->{$xhr}($output['response']);
+			// output as an XHR callback
+			$this->CI->{$callback_xhr}($data['response']);
 		}
 		elseif ( !! method_exists($this->CI, $callback))
 		{
-			// 
-			$this->CI->{$callback}($output['response']);
+			// output to a method in Controller
+			$this->CI->{$callback}($data['response']);
 		}
-		
+		elseif ( trim($view) !== '')
+		{
+			// output using CRUD viewer
+			$this->_callback_viewer($data['response'], $config);
+		}
 		else 
 		{
-			// return output to allow full customization
-			return $output;
+			// return the data
+			return $data;
 		}
+ 		
 	}
 	
 	/**
@@ -485,13 +574,14 @@ class CRUD {
 	 * @param object $data
 	 * @return 
 	 */
-	function _prepare_get($data)
+	private function _prepare_get($config)
 	{
 		// set default model to 'model', unless specified otherwise
 		$model = 'model';
-		if ( trim($this->data['model']) !== '')
+		
+		if ( trim($this->config['model']) !== '')
 		{
-			$model = $this->data['model'];
+			$model = $this->config['model'];
 		}
 		
 		// default configuration array
@@ -504,10 +594,11 @@ class CRUD {
 			'offset' => 0,
 			'base_url' => current_url(),
 			'suffix_url' => '',
+			'enable_ui' => $this->config['enable_ui'],
 			'output' => array (),
 			'view' => '',
 			'header' => array (),
-			'formatter' => array (),
+			'cols' => array (),
 			'no_record' => '',
 			'enable_table' => TRUE,
 			'table_template' => array (),
@@ -516,12 +607,12 @@ class CRUD {
 		);
 		
 		// using 'segment_id' to detect offset for pagination
-		if ( ! isset($data['offset']) && $this->data['segment_id'] > 0)
+		if ( ! isset($config['offset']) && $this->config['segment_id'] > 0)
 		{
-			$data['offset'] = $this->CI->uri->segment($this->data['segment_id'], 0);
+			$config['offset'] = $this->CI->uri->segment($this->config['segment_id'], 0);
 		}
 		
-		return array_merge($default, $data);
+		return array_merge($default, $config);
 	}
 	
 	/**
@@ -531,38 +622,45 @@ class CRUD {
 	 * @param object $data
 	 * @return 
 	 */
-	function _prepare_set($data)
+	private function _prepare_set($config)
 	{
 		// set default model to 'model', unless specified otherwise
 		$model = 'model';
-		if ( trim($this->data['model']) !== '')
+		
+		if ( trim($this->config['model']) !== '')
 		{
-			$model = $this->data['model'];
+			$model = $this->config['model'];
 		}
 		
 		// default configuration array
 		$default = array (
 			'id' => 0,
 			'model' => $model,
-			'method' => 'modify',
+			'method' => 'update',
 			'callback' => '',
 			'callback_xhr' => '',
 			'prefix' => 'default',
 			'form_template' => array(),
-			'fields' => array (),
-			'data' => array(),
+			'action' => current_url(),
+			'multipart' => FALSE,
+			'fields' => 'fields',
+			'data' => 'get_one',
+			'enable_ui' => $this->config['enable_ui'],
 			'output' => array (),
 			'view' => '',
+			'view_read' => '',
+			'view_create' => '',
+			'view_update' => '',
 			'is_accessible' => TRUE
 		);
 		
 		// using 'segment_id' to detect data identity (only support integer)
-		if ( ! isset($data['id']) && $this->data['segment_id'] > 0)
+		if ( ! isset($config['id']) && $this->config['segment_id'] > 0)
 		{
-			$data['id'] = $this->CI->uri->segment($this->data['segment_id'], 0);
+			$config['id'] = $this->CI->uri->segment($this->config['segment_id'], 0);
 		}
 		
-		return array_merge($default, $data);
+		return array_merge($default, $config);
 	}
 	
 	/**
@@ -572,13 +670,13 @@ class CRUD {
 	 * @param object $data
 	 * @return 
 	 */
-	function _prepare_remove($data)
+	private function _prepare_remove($config)
 	{
 		$model = 'model';
 		
-		if (trim($this->data['model']) !== '')
+		if (trim($this->config['model']) !== '')
 		{
-			$model = $this->data['model'];
+			$model = $this->config['model'];
 		}
 		
 		$default = array (
@@ -587,18 +685,18 @@ class CRUD {
 			'method' => 'remove',
 			'callback' => '',
 			'callback_xhr' => '',
+			'enable_ui' => $this->config['enable_ui'],
 			'output' => array (),
 			'view' => '',
 			'is_accessible' => TRUE
 		);
 		
-		if ( ! isset($data['id']) 
-			&& $this->data['segment_id'] > 0)
+		if ( ! isset($config['id']) && $this->config['segment_id'] > 0)
 		{
-			$data['id'] = $this->CI->uri->segment($this->data['segment_id'], 0);
+			$config['id'] = $this->CI->uri->segment($this->config['segment_id'], 0);
 		}
 		
-		return array_merge($default, $data);
+		return array_merge($default, $config);
 	}
 	
 	/**
@@ -609,34 +707,34 @@ class CRUD {
 	 * @param object $prefix
 	 * @return 
 	 */
-	function _organizer($data, $prefix)
+	private function _organizer($config, $prefix)
 	{
-		$output = $data[$prefix];
-		$model = $data['model'];
+		$data = $config[$prefix];
+		$model = $config['model'];
 		
 		// $output should be an array, otherwise assume it referring 
 		// to either a method or property under model
-		if ( !! is_string($output) && trim($output) !== '')
+		if ( !! is_string($data) && trim($data) !== '')
 		{
-			if ( !!  method_exists($this->CI->{$model}, $output))
+			if ( !!  method_exists($this->CI->{$model}, $data))
 			{
 				// get the return value from method under model
-				$output = $this->CI->{$model}->{$output}($data['id']);
+				$data = $this->CI->{$model}->{$data}($config['id']);
 			}
-			elseif ( !! property_exists($this->CI->{$model}, $output))
+			elseif ( !! property_exists($this->CI->{$model}, $data))
 			{
 				// get the value from property under model
-				$output = $this->CI->{$model}->{$output};
+				$data = $this->CI->{$model}->{$data};
 			}
 		}
 		
-		if ( !is_array($output))
+		if ( !is_array($data))
 		{
 			// to be save return an empty array
-			$output = array ();
+			$data = array ();
 		}
 		
-		return $output;
+		return $data;
 	}
 	
 	/**
@@ -645,25 +743,29 @@ class CRUD {
 	 * @access private
 	 * @return 
 	 */
-	function _callback_404()
+	private function _callback_404()
 	{
-		if ( ! isset($this->data['404']) || trim($this->data['404']) === '')
+		if ( ! isset($this->config['404']) || trim($this->config['404']) === '')
 		{
 			show_404();
 		}
 		else
 		{
-			if ( !! property_exists($this->CI, 'ui')) 
+			if ( !! property_exists($this->CI, 'ui') && !! $this->config['enable_ui']) 
 			{
 				// Using Template for CI: $this->ui
 				$this->CI->ui->set_title('Module not accessible');
-				$this->CI->ui->view($this->data['404']);
-				$this->CI->ui->render();
+				$this->CI->ui->view($this->config['404']);
+				
+				if ( !! $this->config['auto_render'])
+				{
+					$this->CI->ui->render();
+				}
 			}
 			else 
 			{
 				// Using CI default template
-				$this->CI->load->view($this->data['404']);
+				$this->CI->load->view($this->config['404']);
 			}
 		}
 	}
@@ -677,31 +779,118 @@ class CRUD {
 	 * @param object $view [optional]
 	 * @return 
 	 */
-	function _callback_viewer($scaffold = array (), $output = array (), $view = '')
+	private function _callback_viewer($scaffold = array (), $config = array ())
 	{
-		$output = array_merge($output, $scaffold);
+		$data = array_merge($config['output'], $scaffold);
+		list($title, $view, $callback, $enable_ui) = $this->_prepare_viewer($data, $config);
+		
+		$data['title'] = $title;
 		
 		// if Template for CI is loaded: $this->ui
-		if ( !! property_exists($this->CI, 'ui')) 
+		if ( !! property_exists($this->CI, 'ui') && !! $enable_ui) 
 		{
-			// Automatically set <title> if available
-			$title = $output['title'];
-			if (isset($title) && trim($title) !== '')
+			if (trim($title) !== '')
 			{
 				$this->CI->ui->set_title($title);
 			}
 			
-			$this->CI->ui->view($view, $output);
-			$this->CI->ui->render();
+			$this->CI->ui->view($view, $data);
+			
+			if ( !! method_exists($this->CI, $callback))
+			{
+				$this->CI->ui->callback($data, $config, $this->_type, $this->_id);
+			}
+			
+			if ( !! $this->config['auto_render'])
+			{
+				$this->CI->ui->render();
+			}
 		}
 		else 
 		{
 			// Using CI default template
-			$this->CI->load->view($view, $output);
+			$this->CI->load->view($config['view'], $data);
 		}
 	}
 	
-	function _args_to_array($args = array(), $option = array (), $offset = 1)
+	private function _prepare_viewer($data, $config)
+	{
+		$title = '';
+		$view = $config['view'];
+		$callback = '';
+		$enable_ui = $config['enable_ui'];
+		
+		// Automatically set <title> if available
+		if (isset($data['title']))
+		{
+			$title = $data['title'];
+		}
+		
+		if ($this->_type === 'get_one' && $this->_id > 0)
+		{
+			if (isset($data['title_read']))
+			{
+				$title = $data['title_read'];
+			}
+			
+			if (isset($config['view_read']) && trim($config['view_read']) != '') {
+				$view = $config['view_read'];
+			}
+			
+			if (isset($data['callback_read'])) {
+				$callback = $data['callback_read'];
+			}
+			
+			if (isset($data['enable_ui_read']) && is_bool($data['enable_ui_read'])) {
+				$enable_ui = $data['enable_ui_read'];
+			}
+		}
+		
+		if ($this->_type === 'set' && $this->_id >= 0)
+		{
+			if (isset($data['title_update']))
+			{
+				$title = $data['title_update'];
+			}
+			
+			if (isset($config['view_update']) && trim($config['view_update']) != '') {
+				$view = $config['view_update'];
+			}
+			
+			if (isset($data['callback_update'])) {
+				$callback = $data['callback_update'];
+			}
+			
+			if (isset($data['enable_ui_update']) && is_bool($data['enable_ui_update'])) {
+				$enable_ui = $data['enable_ui_update'];
+			}
+		}
+		
+		if ($this->_type === 'set' && $this->_id === 0)
+		{
+			if (isset($data['title_create']))
+			{
+				$title = $data['title_create'];
+			}
+			
+			if (isset($config['view_create']) && trim($config['view_create']) != '') {
+				$view = $config['view_create'];
+			}
+			
+			if (isset($data['callback_create'])) {
+				$callback = $data['callback_create'];
+			}
+			
+			if (isset($data['enable_ui_create']) && is_bool($data['enable_ui_create'])) {
+				$enable_ui = $data['enable_ui_create'];
+			}
+		}
+		
+		
+		return array ($title, $view, $callback, $enable_ui);
+	}
+	
+	private function _args_to_array($args = array(), $option = array (), $offset = 1)
 	{
 		$output = array ();
 		
@@ -721,5 +910,85 @@ class CRUD {
 		}
 		
 		return $output;
+	}
+	
+	public function enable_ui()
+	{
+		$this->config['enable_ui'] = TRUE;
+	}
+	
+	public function disable_ui()
+	{
+		$this->config['enable_ui'] = FALSE;
+	}
+	
+	public function enable_render()
+	{
+		$this->config['auto_render'] = TRUE;
+	}
+	
+	public function disable_render()
+	{
+		$this->config['auto_render'] = FALSE;
+	}
+	
+	public function set_model($model = 'model')
+	{
+		$this->config['model'] = $model;
+	}
+	
+	public function set_404($path = '')
+	{
+		$this->config['404'] = $path;
+	}
+	
+	public function set_format()
+	{
+		return ($this->get_format() == 'xhr' ? 'xhr' : 'http');
+	}
+	
+	public function is_format_http()
+	{
+		return $this->_format === 'html';
+	}
+	
+	public function is_format_xhr()
+	{
+		return ! $this->is_format_http();
+	}
+	
+	private function _set_type($type = 'get')
+	{
+		$this->_type = $type;
+	}
+	
+	private function _set_id($id = 0)
+	{
+		$this->_id = $id;
+	}
+	
+	private function _get_access()
+	{
+		return $this->CI->uri->segment($this->config['segment'], '');
+	}
+	
+	private function _get_format()
+	{
+		return $this->CI->uri->segment($this->config['segment_xhr'], '');
+	}
+	
+	public function set_segment($id = 2)
+	{
+		$this->config['segment'] = intval($id);
+	}
+	
+	public function set_segment_id($id = 3)
+	{
+		$this->config['segment_id'] = intval($id);
+	}
+	
+	public function set_segment_xhr($id = 4)
+	{
+		$this->config['segment_xhr'] = intval($id);
 	}
 }
