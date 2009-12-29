@@ -94,27 +94,22 @@ class CRUD {
 		$send_to = '';
 		
 		// test segment
-		if (isset($segment))
-		{
+		if (isset($segment)) {
 			$send_to = (in_array($segment, $is_get) ? 'get' : $send_to);
 			$send_to = (in_array($segment, $is_set) ? 'set' : $send_to);
 			$send_to = (in_array($segment, $is_remove) ? 'remove' : $send_to);
 			$send_to = (in_array($segment, $is_get_one) ? 'get_one' : $send_to);
 			
-			if ($send_to != '' )
-			{
+			if ($send_to != '' ) {
 				// method found, so send to related method
 				$this->generate($send_to);
 			}
-			else 
-			{
-				if ( !! method_exists($this->CI, $segment))
-				{
+			else {
+				if ( !! method_exists($this->CI, $segment)) {
 					// method not found but Controller contain this method
 					$this->CI->{$segment}();
 				}
-				else 
-				{
+				else {
 					// to prevent blank screen if everything else failed, load the 404
 					show_404();
 				}
@@ -143,18 +138,15 @@ class CRUD {
 		$allowed = array ('get', 'get_one', 'set', 'remove');
 		$type_data = $type = trim(strtolower($type));
 		
-		if ($type == 'get_one')
-		{
+		if ($type == 'get_one') {
 			$type_data = 'set';
 		}
 		
 		// first we need to check whether it's pointing to valid method
-		if ( !! in_array($type, $allowed))
-		{
+		if ( !! in_array($type, $allowed)) {
 			$this->{$type}($this->config[$type_data]);
 		}
-		else 
-		{
+		else {
 			log_message('error', 'CRUD: Unable to determine request ' . $type);
 			
 			// 404 using CRUD callback
@@ -190,24 +182,20 @@ class CRUD {
 		
 		// try to set table template when included
 		$template = $config['table_template'];
-		if (is_array($template) && count($template))
-		{
+		if (is_array($template) && count($template)) {
 			$this->CI->table->set_template($template);
 		}
 		
 		// show 404 if access to method is revoke
-		if ( ! $config['is_accessible'] && !! $this->config['enable_get'])
-		{
+		if ( ! $config['is_accessible'] && !! $this->config['enable_get']) {
 			return $this->_callback_404();
 		}
 		
 		$model = $config['model'];
 		$method = $config['method'];
 		
-		if ( !! property_exists($this->CI, $model))
-		{
-			if ( !! method_exists($this->CI->{$model}, $method))
-			{
+		if ( !! property_exists($this->CI, $model)) {
+			if ( !! method_exists($this->CI->{$model}, $method)) {
 				// get data from method
 				$grid = $this->CI->{$model}->{$method}(
 					$config['limit'], 
@@ -229,18 +217,15 @@ class CRUD {
 				$datagrid = $grid['data'];
 				$data['total_rows'] = $grid['total_rows'];
 				
-				if ($config['enable_table'] === TRUE)
-				{
+				if ($config['enable_table'] === TRUE) {
 					$header = $config['header'];
 					$cols = $config['cols'];
 					
-					if ( isset($grid['header']) && is_array($grid['header']))
-					{
+					if ( isset($grid['header']) && is_array($grid['header'])) {
 						$header = $grid['header'];
 					}
 					
-					if ( isset($grid['cols']) && is_array($grid['cols']))
-					{
+					if ( isset($grid['cols']) && is_array($grid['cols'])) {
 						$cols = $grid['cols'];
 					}
 					
@@ -272,15 +257,13 @@ class CRUD {
 				// paste certain information for additional use
 				$data['records'] = $data['output']['records'] = $grid['records'];
 			}
-			else 
-			{
+			else {
 				// method is not available
 				log_message('error', 'CRUD: cannot locate method under Application model class');
 				return $this->_callback_404();
 			}
 		}
-		else 
-		{
+		else {
 			// model is not available
 			log_message('error', 'CRUD: cannot locate Application model class');
 			return $this->_callback_404();
@@ -293,8 +276,7 @@ class CRUD {
 		$callback = $config['callback'];
 		$view = $config['view'];
 		
-		if ($this->is_format_xhr() && !! method_exists($this->CI, $callback_xhr))
-		{
+		if ($this->is_format_xhr() && !! method_exists($this->CI, $callback_xhr)) {
 			// output as an XHR callback
 			$this->CI->{$callback_xhr}(
 				$data['output'], 
@@ -302,8 +284,7 @@ class CRUD {
 				$data['total_rows']
 			);
 		}
-		elseif ( !! method_exists($this->CI, $callback))
-		{
+		elseif ( !! method_exists($this->CI, $callback)) {
 			// output to a method in Controller
 			$this->CI->{$callback}(
 				$data['output'], 
@@ -311,30 +292,28 @@ class CRUD {
 				$data['total_rows']
 			);
 		}
-		elseif (trim($view) !== '')
-		{
+		elseif (trim($view) !== '') {
 			// output using CRUD viewer
 			$this->_callback_viewer($data['output'], $config);
 		}
-		else 
-		{
+		else {
 			// return the data
 			return $data;
 		}
 		
 	}
 	
-	function get_one($config = array())
+	public function get_one($config = array())
 	{
 		return $this->set($config, FALSE);
 	}
 	
-	function form($config = array ())
+	public function form($config = array ())
 	{
 		return $this->set($config, TRUE);
 	}
 	
-	function set($config = array(), $is_form = TRUE)
+	public function set($config = array(), $is_form = TRUE)
 	{
 		$config = $this->_prepare_set($config);
 		
@@ -355,12 +334,10 @@ class CRUD {
 			'response' => $this->_default_response
 		);
 		
-		if ( !! $is_form)
-		{
+		if ( !! $is_form) {
 			$data['output']['form_open'] = form_open($config['action']);
 			
-			if ($config['multipart'] === TRUE)
-			{
+			if ($config['multipart'] === TRUE) {
 				$data['output']['form_open']= form_open_multipart($config['action']);
 			}
 			
@@ -370,49 +347,43 @@ class CRUD {
 		// try to set form template when included
 		$template = $config['form_template'];
 		
-		if (is_array($template) && count($template))
-		{
+		if (is_array($template) && count($template)) {
 			$this->CI->form->set_template($template);
 		}
 		
 		// stop processing if method access to off
-		if ( ! $config['is_accessible'] || ! $this->config['enable_set'])
-		{
+		if ( ! $config['is_accessible'] || ! $this->config['enable_set']) {
 			return $this->_callback_404();
 		}
 		
 		$model = $config['model'];
 		$method = $config['method'];
 		
-		if ( !! property_exists($this->CI, $model))
-		{
+		if ( !! property_exists($this->CI, $model)) {
 			$config['fields'] = $this->_organizer($config, 'fields');
 			$config['data'] = $this->_organizer($config, 'data');
 			
-			if (is_array($config['fields']) && count($config['fields']) > 0)
-			{
+			if (is_array($config['fields']) && count($config['fields']) > 0) {
 				$data['output']['form'] = $this->CI->form->generate(
 					$config['fields'], 
 					$config['prefix'], 
 					$config['data'], 
 					$is_form
 				);
+				
 				$data['output']['fields'] = $this->CI->form->output[$config['prefix']];
 				$data['output']['value'] =  $this->CI->form->value[$config['prefix']];
 				
-				if ( !! $is_form)
-				{
+				if ( !! $is_form) {
 					$data['output']['datagrid'] = $data['output']['form_open'];
 					$data['output']['datagrid'] .= $data['output']['form'];
 					$data['output']['datagrid'] .= $data['output']['form_close'];
 				}
-				else 
-				{
+				else {
 					$data['output']['datagrid'] = $data['output']['form'];
 				}
 				
-				if ( !! $this->CI->form->run($config['prefix']))
-				{
+				if ( !! $this->CI->form->run($config['prefix'])) {
 					$data['result'] = $result = $this->CI->form->result($config['prefix']);
 					
 					if ( !! method_exists($this->CI->{$model}, $method))
@@ -579,8 +550,7 @@ class CRUD {
 		// set default model to 'model', unless specified otherwise
 		$model = 'model';
 		
-		if ( trim($this->config['model']) !== '')
-		{
+		if ( trim($this->config['model']) !== '') {
 			$model = $this->config['model'];
 		}
 		
@@ -607,8 +577,7 @@ class CRUD {
 		);
 		
 		// using 'segment_id' to detect offset for pagination
-		if ( ! isset($config['offset']) && $this->config['segment_id'] > 0)
-		{
+		if ( ! isset($config['offset']) && $this->config['segment_id'] > 0) {
 			$config['offset'] = $this->CI->uri->segment($this->config['segment_id'], 0);
 		}
 		
@@ -627,8 +596,7 @@ class CRUD {
 		// set default model to 'model', unless specified otherwise
 		$model = 'model';
 		
-		if ( trim($this->config['model']) !== '')
-		{
+		if ( trim($this->config['model']) !== '') {
 			$model = $this->config['model'];
 		}
 		
@@ -655,8 +623,7 @@ class CRUD {
 		);
 		
 		// using 'segment_id' to detect data identity (only support integer)
-		if ( ! isset($config['id']) && $this->config['segment_id'] > 0)
-		{
+		if ( ! isset($config['id']) && $this->config['segment_id'] > 0) {
 			$config['id'] = $this->CI->uri->segment($this->config['segment_id'], 0);
 		}
 		
@@ -674,8 +641,7 @@ class CRUD {
 	{
 		$model = 'model';
 		
-		if (trim($this->config['model']) !== '')
-		{
+		if (trim($this->config['model']) !== '') {
 			$model = $this->config['model'];
 		}
 		
@@ -691,8 +657,7 @@ class CRUD {
 			'is_accessible' => TRUE
 		);
 		
-		if ( ! isset($config['id']) && $this->config['segment_id'] > 0)
-		{
+		if ( ! isset($config['id']) && $this->config['segment_id'] > 0) {
 			$config['id'] = $this->CI->uri->segment($this->config['segment_id'], 0);
 		}
 		
@@ -714,22 +679,18 @@ class CRUD {
 		
 		// $output should be an array, otherwise assume it referring 
 		// to either a method or property under model
-		if ( !! is_string($data) && trim($data) !== '')
-		{
-			if ( !!  method_exists($this->CI->{$model}, $data))
-			{
+		if ( !! is_string($data) && trim($data) !== '') {
+			if ( !!  method_exists($this->CI->{$model}, $data)) {
 				// get the return value from method under model
 				$data = $this->CI->{$model}->{$data}($config['id']);
 			}
-			elseif ( !! property_exists($this->CI->{$model}, $data))
-			{
+			elseif ( !! property_exists($this->CI->{$model}, $data)) {
 				// get the value from property under model
 				$data = $this->CI->{$model}->{$data};
 			}
 		}
 		
-		if ( !is_array($data))
-		{
+		if ( !is_array($data)) {
 			// to be save return an empty array
 			$data = array ();
 		}
@@ -745,25 +706,20 @@ class CRUD {
 	 */
 	private function _callback_404()
 	{
-		if ( ! isset($this->config['404']) || trim($this->config['404']) === '')
-		{
+		if ( ! isset($this->config['404']) || trim($this->config['404']) === '') {
 			show_404();
 		}
-		else
-		{
-			if ( !! property_exists($this->CI, 'ui') && !! $this->config['enable_ui']) 
-			{
+		else {
+			if ( !! property_exists($this->CI, 'ui') && !! $this->config['enable_ui']) {
 				// Using Template for CI: $this->ui
 				$this->CI->ui->set_title('Module not accessible');
 				$this->CI->ui->view($this->config['404']);
 				
-				if ( !! $this->config['auto_render'])
-				{
+				if ( !! $this->config['auto_render']) {
 					$this->CI->ui->render();
 				}
 			}
-			else 
-			{
+			else {
 				// Using CI default template
 				$this->CI->load->view($this->config['404']);
 			}
@@ -787,27 +743,22 @@ class CRUD {
 		$data['title'] = $title;
 		
 		// if Template for CI is loaded: $this->ui
-		if ( !! property_exists($this->CI, 'ui') && !! $enable_ui) 
-		{
-			if (trim($title) !== '')
-			{
+		if ( !! property_exists($this->CI, 'ui') && !! $enable_ui) {
+			if (trim($title) !== '') {
 				$this->CI->ui->set_title($title);
 			}
 			
 			$this->CI->ui->view($view, $data);
 			
-			if ( !! method_exists($this->CI, $callback))
-			{
+			if ( !! method_exists($this->CI, $callback)) {
 				$this->CI->ui->callback($data, $config, $this->_type, $this->_id);
 			}
 			
-			if ( !! $this->config['auto_render'])
-			{
+			if ( !! $this->config['auto_render']) {
 				$this->CI->ui->render();
 			}
 		}
-		else 
-		{
+		else {
 			// Using CI default template
 			$this->CI->load->view($config['view'], $data);
 		}
@@ -821,15 +772,12 @@ class CRUD {
 		$enable_ui = $config['enable_ui'];
 		
 		// Automatically set <title> if available
-		if (isset($data['title']))
-		{
+		if (isset($data['title'])) {
 			$title = $data['title'];
 		}
 		
-		if ($this->_type === 'get_one' && $this->_id > 0)
-		{
-			if (isset($data['title_read']))
-			{
+		if ($this->_type === 'get_one' && $this->_id > 0) {
+			if (isset($data['title_read'])) {
 				$title = $data['title_read'];
 			}
 			
@@ -846,10 +794,8 @@ class CRUD {
 			}
 		}
 		
-		if ($this->_type === 'set' && $this->_id >= 0)
-		{
-			if (isset($data['title_update']))
-			{
+		if ($this->_type === 'set' && $this->_id >= 0) {
+			if (isset($data['title_update'])) {
 				$title = $data['title_update'];
 			}
 			
@@ -866,10 +812,8 @@ class CRUD {
 			}
 		}
 		
-		if ($this->_type === 'set' && $this->_id === 0)
-		{
-			if (isset($data['title_create']))
-			{
+		if ($this->_type === 'set' && $this->_id === 0) {
+			if (isset($data['title_create'])) {
 				$title = $data['title_create'];
 			}
 			
@@ -886,7 +830,6 @@ class CRUD {
 			}
 		}
 		
-		
 		return array ($title, $view, $callback, $enable_ui);
 	}
 	
@@ -894,18 +837,14 @@ class CRUD {
 	{
 		$output = array ();
 		
-		if (count($args) == $offset)
-		{
-			foreach ($option as $key => $val)
-			{
-				if (isset($args[$key]))
-				{
+		if (count($args) == $offset) {
+			foreach ($option as $key => $val) {
+				if (isset($args[$key])) {
 					$output[$val] = $args[$key];
 				}
 			}
 		}
-		else 
-		{
+		else {
 			$output = $args;
 		}
 		
