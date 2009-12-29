@@ -15,24 +15,25 @@
 
 class Form {
 	// CI singleton
-	var $CI = NULL;
+	private $CI_input = NULL;
+	private $CI_validation = NULL;
 	
 	// form output
-	var $output = array ();
+	public $output = array ();
 	
 	// form data
-	var $fields = array ();
-	var $value = array ();
-	var $data = array ();
-	var $full_data = array ();
+	public $fields = array ();
+	public $value = array ();
+	public $data = array ();
+	public $full_data = array ();
 	
 	// validation result
-	var $validate = TRUE;
-	var $result = array ();
-	var $success = TRUE;
+	public $validate = TRUE;
+	public $result = array ();
+	public $success = TRUE;
 	
 	// default template
-	var $template = array (
+	public $template = array (
 		'fieldset' => 'table',
 		'fieldset_class' => 'formgrid',
 		'group' => 'tr',
@@ -55,19 +56,22 @@ class Form {
 	 * @access 		public
 	 * @return 		void
 	 */
-	function Form()
+	public function Form()
 	{
 		// load CI object
-		$this->CI =& get_instance();
+		$CI =& get_instance();
 		
 		// load required libraries and helpers
-		$this->CI->load->library(array(
+		$CI->load->library(array(
 			'form_validation'
 		));
-		$this->CI->load->helper('form');
+		$CI->load->helper('form');
+		
+		$this->CI_input =& $CI->input;
+		$this->CI_validation =& $CI->form_validation;
 		
 		// add this class to CI object
-		$this->CI->form = $this;
+		$CI->form = $this;
 		
 		log_message('debug', "Form Class Initialized");
 	}
@@ -79,12 +83,11 @@ class Form {
 	 * @param boolean $valid [optional]
 	 * @return void
 	 */
-	function validation($valid = TRUE)
+	public function validation($valid = TRUE)
 	{
-		if (is_bool($valid))
-		{
+		if ( !! is_bool($valid)) {
 			$this->validate = $valid;
-		}	
+		}
 	}
 	
 	/**
@@ -95,10 +98,9 @@ class Form {
 	 * @param string $id [optional]
 	 * @return void
 	 */
-	function vars($fields = array(), $id = 'default')
+	public function vars($fields = array(), $id = 'default')
 	{
-		if ( ! isset($this->fields[$id])) 
-		{
+		if ( ! isset($this->fields[$id])) {
 			$this->fields[$id] = array ();
 		}
 		
@@ -113,24 +115,21 @@ class Form {
 	 * @param string $id [optional]
 	 * @return array
 	 */
-	function post($fields = array(), $id = 'default')
+	public function post($fields = array(), $id = 'default')
 	{
 		$data = array ();
 		
-		foreach ($fields as $field)
-		{
+		foreach ($fields as $field) {
 			$field = $this->_prepare_field($field);
 			$type = strtolower($field['type']);
 			
-			if ($type === 'checkbox')
-			{
-				$checkbox = strtolower($this->CI->input->post($id . '_' . $field['id'], $field['xss']));
+			if ($type === 'checkbox') {
+				$checkbox = strtolower($this->CI_input->post($id . '_' . $field['id'], $field['xss']));
 				
 				$data[$field['id']] = (( !! isset($checkbox) && $checkbox === 'true') ? TRUE : FALSE);
 			}
-			else 
-			{
-				$data[$field['id']] = $this->CI->input->post($id . '_' . $field['id'], $field['xss']);
+			else {
+				$data[$field['id']] = $this->CI_input->post($id . '_' . $field['id'], $field['xss']);
 			}
 		}
 		
@@ -147,14 +146,12 @@ class Form {
 	 * @param array $id [optional]
 	 * @return array
 	 */
-	function result($id = '')
+	public function result($id = '')
 	{
-		if (trim($id) !== '')
-		{
+		if (trim($id) !== '') {
 			return $this->full_data[$id];
 		}
-		else 
-		{
+		else {
 			return $this->data;
 		}
 	}
@@ -168,7 +165,7 @@ class Form {
 	 * @param array $alt [optional]
 	 * @return 
 	 */
-	function generate($options = array(), $id = 'default', $alt = array(), $is_form = TRUE)
+	public function generate($options = array(), $id = 'default', $alt = array(), $is_form = TRUE)
 	{
 		$this->vars($options, $id);
 		
@@ -183,13 +180,11 @@ class Form {
 		$this->post($fields, $id);
 		$pre = $id . '_';
 		
-		if ( ! isset($this->output[$id]))
-		{
+		if ( ! isset($this->output[$id])) {
 			$this->output[$id] = array ();
 		}
 		
-		if ( ! isset($this->value[$id]))
-		{
+		if ( ! isset($this->value[$id])) {
 			$this->value[$id] = array ();
 		}
 		
@@ -200,28 +195,24 @@ class Form {
 			$template['fieldset_class']
 		);
 		
-		if ( !! $is_form && $this->CI->input->post($pre . '_form_submit') != FALSE)
-		{
+		if ( !! $is_form && $this->CI_input->post($pre . '_form_submit') != FALSE) {
 			// configure form validation rules
-			foreach ($fields as $field) 
-			{
+			foreach ($fields as $field) {
 				$field = $this->_prepare_field($field);
 				$name = $pre . $field['id'];
 				
 				// disable adding rule if it not a form or readonly
-				if ( !! $is_form || $field['type'] != 'readonly')
-				{
+				if ( !! $is_form || $field['type'] != 'readonly') {
 					$rule = str_replace('matches[', 'matches['.$pre, $field['rule']);
-					$this->CI->form_validation->set_rules($name, $field['name'], $rule);
+					$this->CI_validation->set_rules($name, $field['name'], $rule);
 				}
 			}
 			
 			// run the form validation
-			$run = $this->CI->form_validation->run();
+			$run = $this->CI_validation->run();
 		}
 		
-		foreach ($fields as $field) 
-		{
+		foreach ($fields as $field) {
 			$hidden = '';
 			$html = '';
 			
@@ -235,14 +226,12 @@ class Form {
 			$name = $pre . $field['id'];
 			
 			// dropdown is actually select
-			if ($type === 'dropdown')
-			{
+			if ($type === 'dropdown') {
 				$type = 'select';
 			}
 			
 			// load field label for all fieldtype except hidden, form_submit and heading
-			if ($type == 'heading') 
-			{
+			if ($type == 'heading') {
 				$html .= sprintf(
 					'<%s class="%s" %s>',
 					$template['label'],
@@ -250,9 +239,8 @@ class Form {
 					(in_array($template['label'], array('td', 'th'), FALSE) ? 'colspan="2"' : '')
 				);
 			}
-			elseif ( ! in_array($type, array('hidden', 'form_submit')))
-			{
-				if ( ! ( ! $is_form && $type === 'password')) :
+			elseif ( ! in_array($type, array('hidden', 'form_submit'))) {
+				if ( ! ( ! $is_form && $type === 'password')) {
 					$html .= sprintf(
 						'<%s id="tr_%s" class="%s %s">', 
 						$template['group'], 
@@ -269,32 +257,27 @@ class Form {
 						$template['label']
 					);
 					$html .= sprintf('<%s class="%s">', $template['field'], $template['field_class']);
-				endif;
+				}
 			}
 			
 			$value = $this->_pick_standard($name, $field, $alt);
 			
-			if ( ! $is_form) 
-			{
-				if ( ! in_array($type, array('hidden', 'password')))
-				{
+			if ( ! $is_form) {
+				if ( ! in_array($type, array('hidden', 'password'))) {
 					$display_value = $value;
 					
-					if (isset($field['refer_to']) && isset($alt[$field['refer_to']]))
-					{
+					if (isset($field['refer_to']) && isset($alt[$field['refer_to']])) {
 						$display_value = $alt[$field['refer_to']];
 					}
 					
-					if (trim($field['sprintf']) == '')
-					{
+					if (trim($field['sprintf']) == '') {
 						$html .= $display_value;
 					}
 					else {
 						$html .= sprintf($field['sprintf'], $display_value);
 					}
 					
-					if ( ! in_array($type, array('checkbox', 'radio', 'readonly'))) 
-					{
+					if ( ! in_array($type, array('checkbox', 'radio', 'readonly'))) {
 						$html .= sprintf('<em>%s</em>',  $field['desc']);
 					}
 				}
@@ -343,8 +326,7 @@ class Form {
 						break;
 					
 					case 'radio' :
-						foreach ($field['options'] as $key => $val)
-						{
+						foreach ($field['options'] as $key => $val) {
 							$radio_name = $name . '_' . $key;
 							
 							$html .= sprintf('<%s class="%s">', $template['radio'], $template['radio_class']);
@@ -367,13 +349,13 @@ class Form {
 						$html .= $field['html'];
 						break;
 					case 'readonly' :
-						if (trim($field['sprintf']) == '')
-						{
+						if (trim($field['sprintf']) == '') {
 							$html .= $value;
 						}
 						else {
 							$html .= sprintf($field['sprintf'], $value);
 						}
+						
 						$hidden .= form_hidden($name, $value);
 						break;
 					case 'heading' :
@@ -383,8 +365,7 @@ class Form {
 						
 						$checked = FALSE;
 						
-						if ($value == TRUE) 
-						{
+						if ($value == TRUE) {
 							$checked = TRUE;
 						}
 						
@@ -399,8 +380,7 @@ class Form {
 						break;
 					case 'checkbox[]' :
 						
-						foreach ($field['options'] as $key => $val)
-						{
+						foreach ($field['options'] as $key => $val) {
 							$check_name = $name . '_' . $key;
 							
 							$html .= sprintf('<%s class="%s">', $template['radio'], $template['radio_class']);
@@ -431,15 +411,12 @@ class Form {
 						break;
 				}
 			
-				if ( ! in_array($type, array('hidden', 'heading', 'form_submit')))
-				{
-					if ($type !== 'custom' && trim($field['html']) !== '')
-					{
+				if ( ! in_array($type, array('hidden', 'heading', 'form_submit'))) {
+					if ($type !== 'custom' && trim($field['html']) !== '') {
 						$html .= $field['html'];
 					}
 					
-					if ( ! in_array($type, array('checkbox', 'radio', 'readonly'))) 
-					{
+					if ( ! in_array($type, array('checkbox', 'radio', 'readonly'))) {
 						$html .= sprintf('<em>%s</em>',  $field['desc']);
 						$html .= form_error(
 							$name, 
@@ -450,10 +427,8 @@ class Form {
 				}
 			}
 			
-			if ( ! in_array($type, array('hidden', 'form_submit')))
-			{
-				if ( ! ( ! $is_form && $type !== 'password'))
-				{
+			if ( ! in_array($type, array('hidden', 'form_submit'))) {
+				if ( ! ( ! $is_form && $type !== 'password')) {
 					$html .= sprintf(
 						'</%s></%s>', 
 						($type !== 'heading' ? $template['field'] : $template['heading']),
@@ -462,19 +437,15 @@ class Form {
 				}
 			}
 			
-			
-			if ( ! in_array($type, array('hidden', 'readonly')))
-			{
+			if ( ! in_array($type, array('hidden', 'readonly'))) {
 				$this->output[$id][$field['id']] = $html;
 				$final_html .= $html;
 			}
-			else 
-			{
+			else {
 				$this->output[$id][$field['id']] = $hidden;
 				$hidden_html .= $hidden;
 				
-				if ($type === 'readonly')
-				{
+				if ($type === 'readonly') {
 					$final_html .= $html;
 				}
 			}
@@ -483,8 +454,7 @@ class Form {
 		}
 		
 		// add a submit button for form
-		if ( !! $is_form)
-		{
+		if ( !! $is_form) {
 			$final_html .= sprintf(
 				'<%s class="%s" %s>',
 				$template['label'],
@@ -498,8 +468,7 @@ class Form {
 		
 		$final_html .= sprintf('</%s>', $template['fieldset']);
 		
-		if ($run == FALSE)
-		{
+		if ($run == FALSE) {
 			$this->success = FALSE;
 		}
 		
@@ -515,7 +484,7 @@ class Form {
 	 * @param array $field [optional]
 	 * @return array
 	 */
-	function _prepare_field($field = array())
+	private function _prepare_field($field = array())
 	{
 		$default = array(
 			"name" => "",
@@ -549,17 +518,15 @@ class Form {
 	 * @param array $alt
 	 * @return string
 	 */
-	function _pick_standard($name, $field, $alt)
+	private function _pick_standard($name, $field, $alt)
 	{
 		$id = $field['id'];
 		
-		if ( !! isset($alt[$id]) && (is_array($alt[$id]) || trim($alt[$id]) !== '')) 
-		{
+		if ( !! isset($alt[$id]) && (is_array($alt[$id]) || trim($alt[$id]) !== '')) {
 			$field['value'] = $alt[$id];
 		}
 		
-		if ( ! isset($field['value']) || $field['value'] === NULL) 
-		{
+		if ( ! isset($field['value']) || $field['value'] === NULL) {
 			$field['value'] = $field['standard'];
 		} 
 		
@@ -573,9 +540,9 @@ class Form {
 	 * @param array $data
 	 * @return void
 	 */
-	function set_template($data) {
-		if (is_array($data)) 
-		{
+	public function set_template($data) 
+	{
+		if (is_array($data)) {
 			$this->template = array_merge($this->template, $data);
 		}
 	}
@@ -587,10 +554,9 @@ class Form {
 	 * @param string $id [optional]
 	 * @return boolean
 	 */
-	function run($id = '')
+	public function run($id = '')
 	{
-		if (trim($id) !== '')
-		{
+		if (trim($id) !== '') {
 			return $this->success;
 		}
 		else {
