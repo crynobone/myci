@@ -15,7 +15,7 @@ class ACL {
 		
 		$this->_fetch_modules();
 		
-		$this->DB = $CI->db;
+		$this->DB =& $CI->db;
 		$CI->ACL = $this;
 	}
 	
