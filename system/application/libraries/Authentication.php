@@ -2,7 +2,8 @@
 
 class Authentication
 {
-    private $CI 		= NULL;
+    private $DB 		= NULL;
+	private $CI_input	= NULL;
 	private $_test 		= array ('id', 'name', 'pass', 'role', 'status');
 	private $_optional 	= array ('fullname', 'email');
     public $member 		= array (
@@ -17,12 +18,18 @@ class Authentication
 	
     public function Authentication()
     {
-        $this->CI =& get_instance();
+        $CI =& get_instance();
         
-		$this->CI->config->load('application', TRUE);
-		$this->_config = $this->CI->config->item('auth', 'application');
+		$CI->config->load('application', TRUE);
+		$this->_config = $CI->config->item('auth', 'application');
+		
+		$this->DB =& $CI->db;
+		$this->CI_input =& $CI->input;
 		
 		$this->_generate();
+		
+		$CI->auth = $this->member;
+        $CI->authentication = $this;
 	}
 	
 	private function _generate()
@@ -30,9 +37,9 @@ class Authentication
 		$has_session = FALSE;
 		$config = $this->_config;
 		
-        if ($this->CI->input->cookie($config['cookie']) && $config['enable'] === TRUE) {
+        if ($this->CI_input->cookie($config['cookie']) && $config['enable'] === TRUE) {
 			
-            $cookies = html_entity_decode($this->CI->input->cookie($config['cookie'], TRUE));
+            $cookies = html_entity_decode($this->CI_input->cookie($config['cookie'], TRUE));
             $cookie = explode( "|", $cookies );
 
             if ($cookie[2] > 0) {
@@ -73,9 +80,6 @@ class Authentication
         if ($has_session === FALSE) {
 			$this->register();
         }
-
-        $this->CI->auth = $this->member;
-        $this->CI->authentication = $this;
     }
 	
 	private function _generate_query($cookie = array())
@@ -88,31 +92,31 @@ class Authentication
 				$invalid = TRUE;
 			}
 			else {
-				$this->CI->db->select($config['column'][$value]);
+				$this->DB->select($config['column'][$value]);
 			}
 		}
 		
 		foreach ($this->_optional as $value) {
 			if (trim($config['column'][ $value ]) !== '') {
-				$this->CI->db->select($config['column'][$value]);
+				$this->DB->select($config['column'][$value]);
 			}
 		}
 		
 		if ($invalid === FALSE) {
 			if (trim($config['table_meta']) !== '' && trim($config['column']['key']) !== '') {
-				$this->CI->db->join(
+				$this->DB->join(
 					$config['table_meta'],
 					$config['column']['key'] . '=' . $config['column']['id'], 
 					'left'
 				);
 			}
 			
-			$this->CI->db->where($config['column']['id'], $cookie[0]);
-			$this->CI->db->where($config['column']['role'], $cookie[2]);
-			$this->CI->db->limit(1);
-			$this->CI->db->from($config['table']);
+			$this->DB->where($config['column']['id'], $cookie[0]);
+			$this->DB->where($config['column']['role'], $cookie[2]);
+			$this->DB->limit(1);
+			$this->DB->from($config['table']);
 			
-			return $this->CI->db->get();
+			return $this->DB->get();
 		}
 		else {
 			return NULL;
