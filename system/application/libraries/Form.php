@@ -215,6 +215,7 @@ class Form {
 		foreach ($fields as $field) {
 			$hidden = '';
 			$html = '';
+			$show_field = TRUE;
 			
 			// each field need to have minimum set of data to avoid PHP errors, in case you didn't add
 			$field = $this->_prepare_field($field);
@@ -230,6 +231,14 @@ class Form {
 				$type = 'select';
 			}
 			
+			if ($type === 'display' && !! $is_form) {
+				$show_field = FALSE;
+			}
+			
+			if ($type === 'password' && ! $is_form) {
+				$show_field = FALSE;
+			}
+			
 			// load field label for all fieldtype except hidden, form_submit and heading
 			if ($type == 'heading') {
 				$html .= sprintf(
@@ -240,7 +249,7 @@ class Form {
 				);
 			}
 			elseif ( ! in_array($type, array('hidden', 'form_submit'))) {
-				if ( ! ( ! $is_form && $type === 'password')) {
+				if ( !! $show_field) {
 					$html .= sprintf(
 						'<%s id="tr_%s" class="%s %s">', 
 						$template['group'], 
@@ -349,11 +358,17 @@ class Form {
 						$html .= $field['html'];
 						break;
 					case 'readonly' :
+						$display_value = $value;
+						
+						if (isset($field['refer_to']) && isset($alt[$field['refer_to']])) {
+							$display_value = $alt[$field['refer_to']];
+						}
+						
 						if (trim($field['sprintf']) == '') {
-							$html .= $value;
+							$html .= $display_value;
 						}
 						else {
-							$html .= sprintf($field['sprintf'], $value);
+							$html .= sprintf($field['sprintf'], $display_value);
 						}
 						
 						$hidden .= form_hidden($name, $value);
@@ -400,6 +415,9 @@ class Form {
 					case 'form_submit' :
 						$form_submit = $field['name'];
 						break;
+					case 'display' :
+						//do nothing;
+						break;
 					default :
 						$html .= form_input(array (
 							'name' => $name,
@@ -428,7 +446,7 @@ class Form {
 			}
 			
 			if ( ! in_array($type, array('hidden', 'form_submit'))) {
-				if ( ! ( ! $is_form && $type !== 'password')) {
+				if ( !! $show_field) {
 					$html .= sprintf(
 						'</%s></%s>', 
 						($type !== 'heading' ? $template['field'] : $template['heading']),

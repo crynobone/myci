@@ -738,8 +738,7 @@ class CRUD {
 	private function _callback_viewer($scaffold = array (), $config = array ())
 	{
 		$data = array_merge($config['output'], $scaffold);
-		list($title, $view, $callback, $enable_ui) = $this->_prepare_viewer($data, $config);
-		
+		list($title, $view, $pre_callback, $post_callback, $enable_ui) = $this->_prepare_viewer($data, $config);
 		$data['title'] = $title;
 		
 		// if Template for CI is loaded: $this->ui
@@ -748,19 +747,36 @@ class CRUD {
 				$this->CI->ui->set_title($title);
 			}
 			
-			$this->CI->ui->view($view, $data);
-			
-			if ( !! method_exists($this->CI, $callback)) {
-				$this->CI->ui->callback($data, $config, $this->_type, $this->_id);
+			if ( !! method_exists($this->CI, $pre_callback)) {
+				$this->CI->{$pre_callback}($data, $config, $this->_type, $this->_id);
 			}
 			
+			if ($view != FALSE && trim($view) != '') {
+				$this->CI->ui->view($view, $data);
+			}
+			
+			if ( !! method_exists($this->CI, $post_callback)) {
+				$this->CI->{$post_callback}($data, $config, $this->_type, $this->_id);
+			}
+				
 			if ( !! $this->config['auto_render']) {
 				$this->CI->ui->render();
 			}
 		}
 		else {
 			// Using CI default template
-			$this->CI->load->view($config['view'], $data);
+			
+			if ( !! method_exists($this->CI, $pre_callback)) {
+				$this->CI->{$pre_callback}($data, $config, $this->_type, $this->_id);
+			}
+			
+			if ($view != FALSE && trim($view) != '') {
+				$this->CI->load->view($view, $data);
+			}
+			
+			if ( !! method_exists($this->CI, $post_callback)) {
+				$this->CI->{$post_callback}($data, $config, $this->_type, $this->_id);
+			}
 		}
 	}
 	
@@ -768,7 +784,8 @@ class CRUD {
 	{
 		$title = '';
 		$view = $config['view'];
-		$callback = '';
+		$pre_callback = '';
+		$post_callback = '';
 		$enable_ui = $config['enable_ui'];
 		
 		// Automatically set <title> if available
@@ -776,17 +793,28 @@ class CRUD {
 			$title = $data['title'];
 		}
 		
+		if (isset($data['pre_callback'])) {
+			$pre_callback = $data['pre_callback'];
+		}
+		if (isset($data['post_callback'])) {
+			$post_callback = $data['post_callback'];
+		}
+		
 		if ($this->_type === 'get_one' && $this->_id > 0) {
 			if (isset($data['title_read'])) {
 				$title = $data['title_read'];
 			}
 			
-			if (isset($config['view_read']) && trim($config['view_read']) != '') {
+			if (isset($config['view_read']) && ! empty($config['view_read'])) {
 				$view = $config['view_read'];
 			}
 			
-			if (isset($data['callback_read'])) {
-				$callback = $data['callback_read'];
+			if (isset($data['pre_callback_read'])) {
+				$pre_callback = $data['pre_callback_read'];
+			}
+			
+			if (isset($data['post_callback_read'])) {
+				$post_callback = $data['post_callback_read'];
 			}
 			
 			if (isset($data['enable_ui_read']) && is_bool($data['enable_ui_read'])) {
@@ -799,12 +827,20 @@ class CRUD {
 				$title = $data['title_update'];
 			}
 			
-			if (isset($config['view_update']) && trim($config['view_update']) != '') {
+			if (isset($config['view_update']) && ! empty($config['view_update'])) {
 				$view = $config['view_update'];
 			}
 			
-			if (isset($data['callback_update'])) {
-				$callback = $data['callback_update'];
+			if (isset($data['pre_callback_update'])) {
+				$pre_callback = $data['pre_callback_update'];
+			}
+			
+			if (isset($data['pre_callback_update'])) {
+				$pre_callback = $data['pre_callback_update'];
+			}
+			
+			if (isset($data['post_callback_update'])) {
+				$post_callback = $data['post_callback_update'];
 			}
 			
 			if (isset($data['enable_ui_update']) && is_bool($data['enable_ui_update'])) {
@@ -817,12 +853,16 @@ class CRUD {
 				$title = $data['title_create'];
 			}
 			
-			if (isset($config['view_create']) && trim($config['view_create']) != '') {
+			if (isset($config['view_create']) && ! empty($config['view_create'])) {
 				$view = $config['view_create'];
 			}
 			
-			if (isset($data['callback_create'])) {
-				$callback = $data['callback_create'];
+			if (isset($data['pre_callback_create'])) {
+				$pre_callback = $data['pre_callback_create'];
+			}
+			
+			if (isset($data['post_callback_create'])) {
+				$post_callback = $data['post_callback_create'];
 			}
 			
 			if (isset($data['enable_ui_create']) && is_bool($data['enable_ui_create'])) {
@@ -830,7 +870,7 @@ class CRUD {
 			}
 		}
 		
-		return array ($title, $view, $callback, $enable_ui);
+		return array ($title, $view, $pre_callback, $post_callback, $enable_ui);
 	}
 	
 	private function _args_to_array($args = array(), $option = array (), $offset = 1)
