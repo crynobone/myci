@@ -3,6 +3,8 @@
 class Template {
 	private $CI_output = NULL;
 	private $CI_config = NULL;
+	private $CI_load = NULL;
+	private $CI_parser = NULL;
 	
 	public $theme = '';
 	public $directory = 'public/';
@@ -56,6 +58,8 @@ class Template {
 		
 		$this->CI_config =& $CI->config;
 		$this->CI_output =& $CI->output;
+		$this->CI_load =& $CI->load;
+		$this->CI_parser =& $CI->parser;
 	}
 	
 	public function enable()
@@ -98,11 +102,11 @@ class Template {
 	{
 		if (is_array($attr)) {
 			foreach ($attr as $key => $value) {
-				$this->_module[$key] = $value;
+				$this->module[$key] = $value;
 			}
 		}
 		else {
-			$this->_module[$attr] = $html;
+			$this->module[$attr] = $html;
 		}
 	}
 	
@@ -130,7 +134,7 @@ class Template {
 		$part = (($part == NULL || $part == '') ? 'content' : $part);
 		
 		if (in_array($part, $this->_allowed)) {
-			$this->_fragment[$part] .= $this->CI->load->view($file, $data, TRUE);
+			$this->_fragment[$part] .= $this->CI_load->view($file, $data, TRUE);
 		}
 	}
 	
@@ -139,7 +143,7 @@ class Template {
 		$part = (($part == NULL || $part == '') ? 'content' : $part);
 		
 		if (in_array($part, $this->_allowed)) {
-			$this->_fragment[$part] .= $this->CI->parser->parse($file, $data, TRUE);
+			$this->_fragment[$part] .= $this->CI_parser->parse($file, $data, TRUE);
 		}
 	}
 	
@@ -177,7 +181,7 @@ class Template {
 	
 	public function render() 
 	{
-		if ( !! $this->enabled) {
+		if ( !! $this->_enabled) {
 			switch ($this->_type) {
 				case 'json' :
 					$response = json_encode($this->response);
@@ -261,8 +265,8 @@ class Template {
 			$this->CI_config->config['base_url'] . $this->directory . $this->path['SCRIPT'],
 		);
 		
-		if (count($this->_module) > 0) {
-			foreach ($this->_module as $key => $value) {
+		if (count($this->module) > 0) {
+			foreach ($this->module as $key => $value) {
 				array_push($search, '{{MODULE-' . strtoupper( $key ) . '}}');
 				array_push($replace, $value);
 			}

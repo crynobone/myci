@@ -12,7 +12,7 @@ class MY_Table extends CI_Table
 		$this->heading			= array();
 		$this->auto_heading		= TRUE;	
 		$this->summary			= array();
-		$this->formatter		= array();
+		$this->cols				= array();
 	}
 	
 	function generate($table_data = NULL)
@@ -120,9 +120,9 @@ class MY_Table extends CI_Table
 					$cell_open = substr($cell_start, 0, 3);
 					$cell_close = substr($cell_start, 3);
 					
-					if (isset($this->formatter[$key]))
+					if (isset($this->cols[$key]))
 					{
-						$attributes = $this->formatter[$key];
+						$attributes = $this->cols[$key];
 						if (is_array($attributes))
 						{
 							$atts = '';
@@ -188,10 +188,10 @@ class MY_Table extends CI_Table
 		$this->summary = (is_array($args[0])) ? $args[0] : $args;
 	}
 	
-	function set_formatter()
+	function set_cols()
 	{
 		$args = func_get_args();
-		$this->formatter = (is_array($args[0])) ? $args[0] : $args;
+		$this->cols = (is_array($args[0])) ? $args[0] : $args;
 	}
 
 	
