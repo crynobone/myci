@@ -8,8 +8,7 @@ if(!function_exists('form_dropdown_parent'))
 		if (is_array($attributes))
 		{
 			$atts = '';
-			foreach ($attributes as $key => $val)
-			{
+			foreach ($attributes as $key => $val) {
 				$atts .= ' ' . $key . '="' . $val . '"';
 			}
 			
@@ -18,27 +17,20 @@ if(!function_exists('form_dropdown_parent'))
 		
 		$output = '<select name="' . $name . '" ' . $attributes . '>';
 		
-		if (count($data) > 0)
-		{
-			foreach ($data as $key => $value)
-			{
-				if (is_array($value))
-				{
-					if (isset($value[1]) AND $value[1] == $prefix . '0')
-					{
+		if (count($data) > 0) {
+			foreach ($data as $key => $value) {
+				if (is_array($value)) {
+					if (isset($value[1]) AND $value[1] == $prefix . '0') {
 						$output .= '<option value="' . $key . '" '. ($selected == $key ? 'selected="selected"' : '') . '>' . $value[0] . '</option>';
 						
-						foreach ($data as $skey => $svalue) 
-						{
-							if (isset($svalue[1]) AND $prefix . $svalue[1] == $prefix . $key) 
-							{
+						foreach ($data as $skey => $svalue) {
+							if (isset($svalue[1]) AND $prefix . $svalue[1] == $prefix . $key) {
 								$output .= '<option value="' . $skey . '" ' . ($selected == $skey ? 'selected="selected"' : '') . '>&nbsp;&mdash; ' . $svalue[0] . '</option>';
 							}
 						}
 					}
 				}
-				else 
-				{
+				else {
 					$output .= '<option value="' . $key . '" ' . ($selected == $key ? 'selected="selected"' : '') . '>' . $value . '</option>';
 				}
 			}
