@@ -6,18 +6,15 @@
  * @param object $text
  * @param object $attributes
  */
-if(!function_exists('dom'))
-{
+if(!function_exists('dom')) {
 	function dom($text = '', $type = 'strong', $attributes = '')
 	{
 		$type = strtolower( $type );
 		
 		// Were any attributes submitted?  If so generate a string
-		if (is_array($attributes))
-		{
+		if (is_array($attributes)) {
 			$atts = '';
-			foreach ($attributes as $key => $val)
-			{
+			foreach ($attributes as $key => $val) {
 				$atts .= ' ' . $key . '="' . $val . '"';
 			}
 			

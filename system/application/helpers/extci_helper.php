@@ -1,23 +1,19 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
-if (!function_exists('prettylist')) 
-{
+if ( ! function_exists('prettylist')) {
 	function prettylist($data = array(), $between = '', $last = '') 
 	{
 		$count = count($data);
 		$output = '';
 		
-		if ($count > 1)
-		{
-			for ($loop = 0; $loop < ($count - 1); $loop++ )
-			{
+		if ($count > 1) {
+			for ($loop = 0; $loop < ($count - 1); $loop++) {
 				$output .= ($loop == 0 ? '' : $between) . $data[$loop];
 			}
 			
-			$output .= $last . $data[($count-1)];	
+			$output .= $last . $data[($count-1)];
 		}
-		elseif ($count == 1) 
-		{
+		elseif ($count == 1) {
 			$output = $data[0];
 		}
 		
@@ -25,21 +21,18 @@ if (!function_exists('prettylist'))
 	}
 }
 
-if (!function_exists('querystring'))
-{
+if (!function_exists('querystring')) {
 	function querystring($data = array(), $start = '?')
 	{
-		$ci =& get_instance();
+		$CI =& get_instance();
 		
 		$query = "";
 		$count = 0;
 		
-		foreach ($data as $value) 
-		{
-			$val = ($ci->input->get($value) != FALSE ? $ci->input->get($value) : '');
+		foreach ($data as $value) {
+			$val = ($CI->input->get($value) != FALSE ? $CI->input->get($value) : '');
 			
-			if (trim($val) != '') 
-			{
+			if (trim($val) != '') {
 				$query .= ($count == 0 ? $start : '&');
 				$query .= $value . '=' . $val;
 				$count++;
@@ -50,19 +43,16 @@ if (!function_exists('querystring'))
 	}
 }
 
-if (!function_exists('is_mobile_browser'))
-{
+if ( ! function_exists('is_mobile_browser')) {
 	function is_mobile_browser()
 	{
 		$mobile = FALSE;
 		
-		if (preg_match('/(up.browser|up.link|mmp|symbian|smartphone|midp|wap|phone)/i', strtolower($_SERVER['HTTP_USER_AGENT'])))
-		{
+		if (preg_match('/(up.browser|up.link|mmp|symbian|smartphone|midp|wap|phone)/i', strtolower($_SERVER['HTTP_USER_AGENT']))) {
 			$mobile = TRUE;
 		}
 		
-		if((strpos(strtolower($_SERVER['HTTP_ACCEPT']), 'application/vnd.wap.xhtml+xml') > 0) OR ((isset($_SERVER['HTTP_X_WAP_PROFILE']) OR isset($_SERVER['HTTP_PROFILE']))))
-		{
+		if((strpos(strtolower($_SERVER['HTTP_ACCEPT']), 'application/vnd.wap.xhtml+xml') > 0) || ((isset($_SERVER['HTTP_X_WAP_PROFILE']) || isset($_SERVER['HTTP_PROFILE'])))) {
 			$mobile = TRUE;
 		}
 		
@@ -79,18 +69,15 @@ if (!function_exists('is_mobile_browser'))
 			'wapr','webc','winw','winw','xda','xda-'
 		);
 		
-		if (in_array($mobile_ua, $mobile_agents))
-		{
+		if (in_array($mobile_ua, $mobile_agents)) {
 			$mobile = TRUE;
 		}
 		
-		if (isset($_SERVER['ALL_HTTP']) AND strpos(strtolower($_SERVER['ALL_HTTP']), 'OperaMini') > 0)
-		{
+		if (isset($_SERVER['ALL_HTTP']) && strpos(strtolower($_SERVER['ALL_HTTP']), 'OperaMini') > 0) {
 			$mobile = TRUE;
 		}
 				
-		if (strpos(strtolower($_SERVER['HTTP_USER_AGENT']), 'windows') > 0)
-		{
+		if (strpos(strtolower($_SERVER['HTTP_USER_AGENT']), 'windows') > 0) {
 			$mobile = TRUE;
 		}
 				
@@ -98,8 +85,7 @@ if (!function_exists('is_mobile_browser'))
 	}
 }
 
-if ( ! function_exists('get_valid_domain_name'))
-{
+if ( ! function_exists('get_valid_domain_name')) {
 	function get_valid_domain_name($domain = '')
 	{
 		$domain = prep_url($domain);
@@ -113,15 +99,12 @@ if ( ! function_exists('get_valid_domain_name'))
 		$dir = '/';
 		$uri = $domains[0];
 			
-		for ($loop = 0; $loop <count($domains); $loop++)
-		{
-			if ($loop == 1 && isset($domains[1]) && $domains[1] != '')
-			{
+		for ($loop = 0; $loop < count($domains); $loop++) {
+			if ($loop == 1 && isset($domains[1]) && $domains[1] != '') {
 				$uri .= '/' . $domains[1];
 			}
 			
-			if ($loop >= 1 && $domains[$loop] != '')
-			{
+			if ($loop >= 1 && $domains[$loop] != '') {
 				$dir .= $domains[$loop] .'/';
 			}
 		}
@@ -136,16 +119,14 @@ if ( ! function_exists('get_valid_domain_name'))
 	}
 }
 
-if ( ! function_exists('to_proper_date'))
-{
+if ( ! function_exists('to_proper_date')) {
 	function to_proper_date($date)
 	{
 		return implode('-', array_reverse(explode('-', $date)));
 	}
 }
 
-if ( ! function_exists('to_proper_datetime'))
-{
+if ( ! function_exists('to_proper_datetime')) {
 	function to_proper_datetime($datetime)
 	{
 		$date = explode(' ', $datetime);
@@ -153,24 +134,19 @@ if ( ! function_exists('to_proper_datetime'))
 	}
 }
 
-if ( ! function_exists('args_to_array'))
-{
+if ( ! function_exists('args_to_array')) {
 	function args_to_array($args = array(), $option = array (), $offset = 1)
 	{
 		$output = array ();
 		
-		if (count($args) != $offset)
-		{
-			foreach ($option as $key => $val)
-			{
-				if (isset($args[$key]))
-				{
+		if (count($args) != $offset) {
+			foreach ($option as $key => $val) {
+				if (isset($args[$key])) {
 					$output[$val] = $args[$key];
 				}
 			}
 		}
-		else 
-		{
+		else {
 			$output = $args;
 		}
 		
