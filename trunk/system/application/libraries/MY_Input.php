@@ -26,8 +26,7 @@ class MY_Input extends CI_Input
 	{
 		$get = $this->_fetch_from_array($_GET, $index, $xss_clean);
 		
-		if ($get === FALSE) 
-		{
+		if ($get === FALSE) {
 			$get = $this->_fetch_from_array($this->_input['GET'], $index, $xss_clean);
 		}
 		

@@ -33,8 +33,7 @@ class MY_Pagination extends CI_Pagination
     function create_links()
     {
         // If our item count or per-page total is zero there is no need to continue.
-        if ($this->total_rows == 0 OR $this->per_page == 0)
-        {
+        if ($this->total_rows == 0 OR $this->per_page == 0) {
             return '';
         }
 
@@ -42,28 +41,23 @@ class MY_Pagination extends CI_Pagination
         $num_pages = ceil($this->total_rows/$this->per_page);
 
         // Is there only one page? Hm... nothing more to do here then.
-        if ($num_pages == 1)
-        {
+        if ($num_pages == 1) {
             return '';
         }
 
         // Determine the current page number.
         $CI = & get_instance();
 
-        if ($CI->config->item('enable_query_strings') === TRUE AND $this->page_query_string === TRUE)
-        {
-            if ($CI->input->get($this->query_string_segment) != 0)
-            {
+        if ($CI->config->item('enable_query_strings') === TRUE AND $this->page_query_string === TRUE) {
+            if ($CI->input->get($this->query_string_segment) != 0) {
                 $this->cur_page = $CI->input->get($this->query_string_segment);
 
                 // Prep the current page - no funny business!
                 $this->cur_page = (int)$this->cur_page;
             }
         }
-        else
-        {
-            if ($CI->uri->segment($this->uri_segment) != 0)
-            {
+        else {
+            if ($CI->uri->segment($this->uri_segment) != 0) {
                 $this->cur_page = $CI->uri->segment($this->uri_segment);
 
                 // Prep the current page - no funny business!
@@ -73,20 +67,17 @@ class MY_Pagination extends CI_Pagination
 
         $this->num_links = (int)$this->num_links;
 
-        if ($this->num_links < 1)
-        {
+        if ($this->num_links < 1) {
             show_error('Your number of links must be a positive number.');
         }
 
-        if (!is_numeric($this->cur_page))
-        {
+        if (!is_numeric($this->cur_page)) {
             $this->cur_page = 0;
         }
 
         // Is the page number beyond the result range?
         // If so we show the last page
-        if ($this->cur_page > $this->total_rows)
-        {
+        if ($this->cur_page > $this->total_rows) {
             $this->cur_page = ($num_pages-1)*$this->per_page;
         }
 
@@ -100,12 +91,10 @@ class MY_Pagination extends CI_Pagination
 		
 		// Is pagination being used over GET or POST?  If get, add a per_page query
 		// string. If post, add a trailing slash to the base URL if needed
-		if ($CI->config->item('enable_query_strings') === TRUE AND $this->page_query_string === TRUE)
-		{
+		if ($CI->config->item('enable_query_strings') === TRUE AND $this->page_query_string === TRUE) {
         	$this->base_url = rtrim($this->base_url).'&amp;'.$this->query_string_segment.'=';
 		}
-		else
-		{
+		else {
         	$this->base_url = rtrim($this->base_url, '/').'/';
 		}
 
@@ -113,14 +102,12 @@ class MY_Pagination extends CI_Pagination
 		$output = '';
 		
 		// Render the "First" link
-		if ($this->cur_page > ($this->num_links+1))
-		{
+		if ($this->cur_page > ($this->num_links+1)) {
         	$output .= $this->first_tag_open.'<a href="'.$this->_anchor(0).'">'.$this->first_link.'</a>'.$this->first_tag_close;
 		}
 
         // Render the "previous" link
-        if ($this->cur_page != 1)
-        {
+        if ($this->cur_page != 1) {
         	$i = $uri_page_number-$this->per_page;
             if ($i == 0)
 				$i = '';
@@ -129,18 +116,14 @@ class MY_Pagination extends CI_Pagination
         }
 
         // Write the digit links
-        for ($loop = $start-1; $loop <= $end; $loop++)
-        {
+        for ($loop = $start-1; $loop <= $end; $loop++) {
             $i = ($loop*$this->per_page)-$this->per_page;
 
-			if ($i >= 0)
-			{
-            	if ($this->cur_page == $loop)
-            	{
+			if ($i >= 0) {
+            	if ($this->cur_page == $loop) {
 					$output .= $this->cur_tag_open.$loop.$this->cur_tag_close; // Current page
 				}
-				else
-				{
+				else {
 					$n = ($i == 0) ? '' : $i;
 					$output .= $this->num_tag_open.'<a href="'.$this->_anchor($n).'">'.$loop.'</a>'.$this->num_tag_close;
 				}
@@ -148,14 +131,12 @@ class MY_Pagination extends CI_Pagination
 		}
 
 		// Render the "next" link
-		if ($this->cur_page < $num_pages)
-		{
+		if ($this->cur_page < $num_pages) {
     		$output .= $this->next_tag_open.'<a href="'.$this->_anchor($this->cur_page*$this->per_page).'">'.$this->next_link.'</a>'.$this->next_tag_close;
 		}
 
 		// Render the "Last" link
-		if (($this->cur_page+$this->num_links) < $num_pages)
-		{
+		if (($this->cur_page+$this->num_links) < $num_pages) {
     		$i = (($num_pages*$this->per_page)-$this->per_page);
 			$output .= $this->last_tag_open.'<a href="'.$this->_anchor($i).'">'.$this->last_link.'</a>'.$this->last_tag_close;
 		}
