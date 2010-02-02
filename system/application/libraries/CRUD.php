@@ -20,6 +20,7 @@ class CRUD {
 	private $_id = 0;
 	private $_type = 'get';
 	private $_format = 'http';
+	private $_ACL = 3;
 	
 	// set default modify/delete response
 	private $_default_response = array (
@@ -31,6 +32,12 @@ class CRUD {
 	
 	// Allow output to be access
 	public $data = array ();
+	private $_acl_lookup = array (
+		0 => 'NONE',
+		1 => 'READ',
+		2 => 'MODIFY',
+		3 => 'DELETE'
+	);
 	
 	// set global configuration variables for CRUD
 	public $config = array (
@@ -45,6 +52,7 @@ class CRUD {
 		'enable_set' => TRUE,
 		'enable_remove' => TRUE,
 		'404' => '',
+		'ACL' => 3,
 		'enable_ui' => TRUE,
 		'auto_render' => TRUE
 	);
@@ -101,11 +109,14 @@ class CRUD {
 			$send_to = (in_array($segment, $is_get_one) ? 'get_one' : $send_to);
 			
 			if ($send_to != '' ) {
+				log_message('debug', "CRUD: Call $send_to");
 				// method found, so send to related method
 				$this->generate($send_to);
 			}
 			else {
 				if ( !! method_exists($this->CI, $segment)) {
+					log_message('debug', "CRUD: Call method $segment");
+		
 					// method not found but Controller contain this method
 					$this->CI->{$segment}();
 				}
@@ -124,6 +135,7 @@ class CRUD {
 	public function vars($config = array ())
 	{
 		$this->config = array_merge($this->config, $config);
+		log_message('debug', 'CRUD: Set variable');
 	}
 	
 	/**
@@ -183,11 +195,13 @@ class CRUD {
 		// try to set table template when included
 		$template = $config['table_template'];
 		if (is_array($template) && count($template)) {
+			log_message('debug', 'CRUD: Set TABLE template');
 			$this->CI->table->set_template($template);
 		}
 		
 		// show 404 if access to method is revoke
-		if ( ! $config['is_accessible'] && !! $this->config['enable_get']) {
+		if (( ! $config['is_accessible'] || ! $this->config['enable_get']) || $this->config['ACL'] < 1) {
+			log_message('debug', 'CRUD: Access is disabled');
 			return $this->_callback_404();
 		}
 		
@@ -195,7 +209,11 @@ class CRUD {
 		$method = $config['method'];
 		
 		if ( !! property_exists($this->CI, $model)) {
+			log_message('debug', "CRUD: Using model '{$model}'");
+			
 			if ( !! method_exists($this->CI->{$model}, $method)) {
+				log_message('debug', "CRUD: Using method: '{$method}'");
+				
 				// get data from method
 				$grid = $this->CI->{$model}->{$method}(
 					$config['limit'], 
@@ -305,11 +323,13 @@ class CRUD {
 	
 	public function get_one($config = array())
 	{
+		log_message('debug', 'CRUD: called get_one()');
 		return $this->set($config, FALSE);
 	}
 	
 	public function form($config = array ())
 	{
+		log_message('debug', 'CRUD: called form()');
 		return $this->set($config, TRUE);
 	}
 	
@@ -348,11 +368,19 @@ class CRUD {
 		$template = $config['form_template'];
 		
 		if (is_array($template) && count($template)) {
+			log_message('debug', 'CRUD: Set form template');
 			$this->CI->form->set_template($template);
 		}
 		
 		// stop processing if method access to off
-		if ( ! $config['is_accessible'] || ! $this->config['enable_set']) {
+		if (( ! $config['is_accessible'] || ! $this->config['enable_set']) || ($this->config['ACL'] < 2 && $this->_set_type === 'set')) {
+			// shouldn't be able to modify
+			log_message('debug', 'CRUD: Access to add/edit is disabled');
+			return $this->_callback_404();
+			
+		} elseif (( ! $config['is_accessible'] || ! $this->config['enable_get']) || ($this->config['ACL'] < 1 && $this->_set_type === 'get_one')) {
+			// shouldn't be able to view single data
+			log_message('debug', 'CRUD: Access to view is disabled');
 			return $this->_callback_404();
 		}
 		
@@ -360,10 +388,13 @@ class CRUD {
 		$method = $config['method'];
 		
 		if ( !! property_exists($this->CI, $model)) {
+			log_message('debug', "CRUD: Using model '{$model}'");
+			
 			$config['fields'] = $this->_organizer($config, 'fields');
 			$config['data'] = $this->_organizer($config, 'data');
 			
 			if (is_array($config['fields']) && count($config['fields']) > 0) {
+				
 				$data['output']['form'] = $this->CI->form->generate(
 					$config['fields'], 
 					$config['prefix'], 
@@ -384,10 +415,13 @@ class CRUD {
 				}
 				
 				if ( !! $this->CI->form->run($config['prefix'])) {
+					log_message('debug', 'CRUD: Form validated');
+					
 					$data['result'] = $result = $this->CI->form->result($config['prefix']);
 					
 					if ( !! method_exists($this->CI->{$model}, $method))
 					{
+						log_message('debug', "CRUD: Using method '{$method}'");
 						$data['response'] = $this->CI->{$model}->{$method}($result, $this->_default_response);
 					}
 					else 
@@ -410,7 +444,8 @@ class CRUD {
 							$this->CI->form->template['error']
 						);
 					}
-					
+				} else {
+					log_message('debug', 'CRUD: Form not validated');
 				}
 				
 			}
@@ -475,7 +510,7 @@ class CRUD {
 		);
 		
 		// disable access: useful when user doesn't have ACL access
-		if ( ! $config['is_accessible'] && !! $this->config['enabled_remove'])
+		if (( ! $config['is_accessible'] && ! $this->config['enabled_remove']) || $this->config['ACL'] < 3)
 		{
 			return $this->_callback_404();
 		}
@@ -805,7 +840,7 @@ class CRUD {
 				$title = $data['title_read'];
 			}
 			
-			if (isset($config['view_read']) && ! empty($config['view_read'])) {
+			if (isset($config['view_read']) && trim($config['view_read']) != '') {
 				$view = $config['view_read'];
 			}
 			
@@ -827,7 +862,7 @@ class CRUD {
 				$title = $data['title_update'];
 			}
 			
-			if (isset($config['view_update']) && ! empty($config['view_update'])) {
+			if (isset($config['view_update']) && trim($config['view_update']) != '') {
 				$view = $config['view_update'];
 			}
 			
@@ -853,7 +888,7 @@ class CRUD {
 				$title = $data['title_create'];
 			}
 			
-			if (isset($config['view_create']) && ! empty($config['view_create'])) {
+			if (isset($config['view_create']) && trim($config['view_create']) != '') {
 				$view = $config['view_create'];
 			}
 			
