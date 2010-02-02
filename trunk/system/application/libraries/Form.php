@@ -167,6 +167,8 @@ class Form {
 	 */
 	public function generate($options = array(), $id = 'default', $alt = array(), $is_form = TRUE)
 	{
+		log_message('debug', "Form: Start generate {$id}");
+		
 		$this->vars($options, $id);
 		
 		$run = FALSE;
@@ -195,7 +197,10 @@ class Form {
 			$template['fieldset_class']
 		);
 		
-		if ( !! $is_form && $this->CI_input->post($pre . '_form_submit') != FALSE) {
+		$got_rule = FALSE;
+		
+		if ( !! $is_form) {
+			log_message('debug', 'Form: Configure rule');
 			// configure form validation rules
 			foreach ($fields as $field) {
 				$field = $this->_prepare_field($field);
@@ -205,11 +210,27 @@ class Form {
 				if ( !! $is_form || $field['type'] != 'readonly') {
 					$rule = str_replace('matches[', 'matches['.$pre, $field['rule']);
 					$this->CI_validation->set_rules($name, $field['name'], $rule);
+					$got_rule = TRUE;
 				}
 			}
 			
 			// run the form validation
-			$run = $this->CI_validation->run();
+			if (!! $this->CI_input->post($pre . '_form_submit')) {
+				log_message('debug', 'Form: Form submit was triggered');
+				$run = $this->CI_validation->run();
+				
+				if ( ! $got_rule) {
+					$run = TRUE;
+				}
+			} else {
+				log_message('debug', 'Form: Form not submitted');
+			}
+			
+			if ( ! $got_rule) {
+				log_message('debug', 'Form: No rules were configured');
+			}
+		} else {
+			log_message('debug', 'Form: No rules were configured because it not a form');
 		}
 		
 		foreach ($fields as $field) {
@@ -574,7 +595,7 @@ class Form {
 	 */
 	public function run($id = '')
 	{
-		if (trim($id) !== '') {
+		if (trim($id) === '') {
 			return $this->success;
 		}
 		else {
