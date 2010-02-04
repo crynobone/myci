@@ -296,6 +296,10 @@ class Form {
 				if ( ! in_array($type, array('hidden', 'password'))) {
 					$display_value = $value;
 					
+					if ($type === 'heading') {
+						$display_value = $field['name'];
+					}
+					
 					if (isset($field['refer_to']) && isset($alt[$field['refer_to']])) {
 						$display_value = $alt[$field['refer_to']];
 					}
@@ -455,7 +459,7 @@ class Form {
 						$html .= $field['html'];
 					}
 					
-					if ( ! in_array($type, array('checkbox', 'radio', 'readonly'))) {
+					if ( ! in_array($type, array('heading', 'checkbox', 'radio', 'readonly'))) {
 						$html .= sprintf('<em>%s</em>',  $field['desc']);
 						$html .= form_error(
 							$name, 
@@ -470,14 +474,16 @@ class Form {
 				if ( !! $show_field) {
 					$html .= sprintf(
 						'</%s></%s>', 
-						($type !== 'heading' ? $template['field'] : $template['heading']),
+						($type !== 'heading' ? $template['field'] : $template['label']),
 						$template['group']
 					);
 				}
 			}
 			
 			if ( ! in_array($type, array('hidden', 'readonly'))) {
-				$this->output[$id][$field['id']] = $html;
+				if ($type !== 'heading') {
+					$this->output[$id][$field['id']] = $html;
+				}
 				$final_html .= $html;
 			}
 			else {
