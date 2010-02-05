@@ -88,14 +88,14 @@ class MY_Form_validation extends CI_Form_validation
 			
 			foreach ($rules as $rule_key => $rule_val) {
 				
-				if ($in_expression == TRUE) {
+				if ($in_expression === TRUE) {
 					if (preg_match('/^(.*)\$\/$/', $rule_val)) {
 						$in_expression = FALSE;
 					}
 					$rule[$count] .= '|' . $rule_val;
 				}
 				else {
-					if ( !! strtolower(substr($rule_val, 0, 11)) == 'expression:') {
+					if (strtolower(substr($rule_val, 0, 11)) === 'expression:') {
 						$in_expression = TRUE;
 					}
 					++$count;
