@@ -40,6 +40,7 @@ class Template {
 		'footer'
 	);
 	private $_enable_flash_message = FALSE;
+	private $_class_flash_message = '%s';
 	
 	public function Template() 
 	{
@@ -56,6 +57,7 @@ class Template {
 		
 		if ($config['enable_flash_message'] === TRUE) :
 			$this->_enable_flash_message = TRUE;
+			$this->_class_flash_message = $config['class_flash_message'];
 		endif;
 		
 		$CI->ui = $this;
@@ -294,7 +296,12 @@ class Template {
 			$html = '';
 			
 			if ( !! $class) {
-				$html = sprintf('<div class="%s message close"><h2>%s</h2><p>%s</p></div>', $class, $title, $text);
+				$html = sprintf(
+					'<div class="%s"><h2>%s</h2><p>%s</p></div>', 
+					sprintf($this->_class_flash_message, $class),
+					$title, 
+					$text
+				);
 			}
 			
 			$this->set_module('fm', $html);
