@@ -15,8 +15,7 @@
 
 class Form {
 	// CI singleton
-	private $CI_input = NULL;
-	private $CI_validation = NULL;
+	private $CI = NULL;
 	
 	// form output
 	public $output = array ();
@@ -38,7 +37,7 @@ class Form {
 		'fieldset_class' => 'formgrid',
 		'group' => 'tr',
 		'group_class' => 'fields',
-		'heading_class' => 'heading',
+		'heading_class' => 'theading',
 		'label' => 'td',
 		'label_class' => 'label_field',
 		'field' => 'td',
@@ -59,19 +58,17 @@ class Form {
 	public function Form()
 	{
 		// load CI object
-		$CI =& get_instance();
+		$this->CI =& get_instance();
 		
 		// load required libraries and helpers
-		$CI->load->library(array(
+		$this->CI->load->library(array(
 			'form_validation'
 		));
-		$CI->load->helper('form');
+		$this->CI->load->helper('form');
 		
-		$this->CI_input =& $CI->input;
-		$this->CI_validation =& $CI->form_validation;
 		
 		// add this class to CI object
-		$CI->form = $this;
+		$this->CI->form = $this;
 		
 		log_message('debug', "Form Class Initialized");
 	}
@@ -124,12 +121,12 @@ class Form {
 			$type = strtolower($field['type']);
 			
 			if ($type === 'checkbox') {
-				$checkbox = strtolower($this->CI_input->post($id . '_' . $field['id'], $field['xss']));
+				$checkbox = strtolower($this->CI->input->post($id . '_' . $field['id'], $field['xss']));
 				
 				$data[$field['id']] = (( !! isset($checkbox) && $checkbox === 'true') ? TRUE : FALSE);
 			}
 			else {
-				$data[$field['id']] = $this->CI_input->post($id . '_' . $field['id'], $field['xss']);
+				$data[$field['id']] = $this->CI->input->post($id . '_' . $field['id'], $field['xss']);
 			}
 		}
 		
@@ -172,7 +169,7 @@ class Form {
 		$this->vars($options, $id);
 		
 		$run = FALSE;
-		$form_submit = 'Submit';
+		$form_submit = 'Hantar';
 		$form_buttons = array ();
 		
 		$validate = $this->validate;
@@ -207,21 +204,29 @@ class Form {
 				$name = $pre . $field['id'];
 				
 				// disable adding rule if it not a form or readonly
-				if ( !! $is_form || $field['type'] != 'readonly') {
+				if ( $field['type'] != 'readonly') {
+					
 					$rule = str_replace('matches[', 'matches['.$pre, $field['rule']);
-					$this->CI_validation->set_rules($name, $field['name'], $rule);
+					
+					log_message('debug', "Form: configure '{$name}' with '{$rule}'");
+					$this->CI->form_validation->set_rules($name, $field['name'], $rule);
 					$got_rule = TRUE;
+				}
+				else {
+					log_message('debug', "Form: configure '{$name}' not added");
 				}
 			}
 			
 			// run the form validation
-			if (!! $this->CI_input->post($pre . '_form_submit')) {
+			if (!! $this->CI->input->post($pre . '_form_submit')) {
 				log_message('debug', 'Form: Form submit was triggered');
-				$run = $this->CI_validation->run();
+				$run = $this->CI->form_validation->run();
 				
 				if ( ! $got_rule) {
+					log_message('debug', 'Form: Form does not have any rule');
 					$run = TRUE;
 				}
+				
 			} else {
 				log_message('debug', 'Form: Form not submitted');
 			}

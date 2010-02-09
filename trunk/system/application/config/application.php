@@ -24,6 +24,7 @@ $config['site_tagline'] = '';
 
 $config['template']['theme'] = 'default';
 $config['template']['filename'] = 'index.html';
+$config['template']['enable_flash_message'] = FALSE;
 
 /*
 |--------------------------------------------------------------------------

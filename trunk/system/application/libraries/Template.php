@@ -5,6 +5,7 @@ class Template {
 	private $CI_config = NULL;
 	private $CI_load = NULL;
 	private $CI_parser = NULL;
+	private $CI_session = NULL;
 	
 	public $theme = '';
 	public $directory = 'public/';
@@ -38,18 +39,24 @@ class Template {
 		'content',
 		'footer'
 	);
+	private $_enable_flash_message = FALSE;
 	
 	public function Template() 
 	{
 		$CI =& get_instance();
 		
 		$CI->config->load('application', TRUE);
+		$CI->load->library('session');
 		$this->site_name = $CI->config->item('site_name', 'application');
 		$this->site_tagline = $CI->config->item('site_tagline', 'application');
 		$config = $CI->config->item('template', 'application');
 		
 		$this->theme = $config['theme'] . '/';
 		$this->filename = $config['filename'];
+		
+		if ($config['enable_flash_message'] === TRUE) :
+			$this->_enable_flash_message = TRUE;
+		endif;
 		
 		$CI->ui = $this;
 		
@@ -60,6 +67,9 @@ class Template {
 		$this->CI_output =& $CI->output;
 		$this->CI_load =& $CI->load;
 		$this->CI_parser =& $CI->parser;
+		$this->CI_session =& $CI->session;
+		
+		$this->_post_flash_message();
 	}
 	
 	public function enable()
@@ -273,5 +283,63 @@ class Template {
 		}
 		
 		return @str_replace($search, $replace, $data);
+	}
+	
+	private function _post_flash_message()
+	{
+		if ( !! $this->_enable_flash_message) {
+			$class = $this->CI_session->userdata('fm_class');
+			$title = $this->CI_session->userdata('fm_title');
+			$text = $this->CI_session->userdata('fm_text');
+			$html = '';
+			
+			if ( !! $class) {
+				$html = sprintf('<div class="%s message close"><h2>%s</h2><p>%s</p></div>', $class, $title, $text);
+			}
+			
+			$this->set_module('fm', $html);
+			
+			$this->CI_session->unset_userdata(array (
+				'fm_class' => '',
+				'fm_title' => '',
+				'fm_text' => ''
+			));
+		}
+	}
+	
+	public function set_flash_message($class = 'information', $text = '', $delay = TRUE)
+	{
+		$title = '';
+		$enabled = TRUE;
+		
+		switch ($class) {
+			case 'information' :
+				$title = 'Maklumat';
+				break;
+			case 'error' :
+				$title = 'Ralat';
+				break;
+			case 'warning' :
+				$title = 'Amaran';
+				break;
+			case 'success' :
+				$title = 'Berjaya';
+				break;
+			default :
+				$title = '';
+				$enabled = FALSE;
+		}
+		
+		if ( !! $enabled && !! $this->_enable_flash_message) {
+			$this->CI_session->set_userdata(array (
+				'fm_class' => $class,
+				'fm_title' => $title,
+				'fm_text' => $text
+			));
+			
+			if ( ! $delay) {
+				$this->_post_flash_message();
+			}
+		}
 	}
 }
