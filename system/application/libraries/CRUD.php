@@ -443,6 +443,10 @@ class CRUD {
 							$data['response']['error'],
 							$this->CI->form->template['error']
 						);
+						
+						if (property_exists($this->CI, 'ui')) {
+							$this->CI->ui->set_flash_message('error', $data['response']['error'], FALSE);
+						}
 					}
 				} else {
 					log_message('debug', 'CRUD: Form not validated');
