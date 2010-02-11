@@ -78,7 +78,7 @@ class CRUD {
 		// add this class to CI object
 		$this->CI->CRUD = $this;
 		
-		log_message('debug', "CRUD Class Initialized");
+		log_message('debug', "CRUD: Class initialized");
 	}
 	
 	/**
@@ -109,19 +109,20 @@ class CRUD {
 			$send_to = (in_array($segment, $is_get_one) ? 'get_one' : $send_to);
 			
 			if ($send_to != '' ) {
-				log_message('debug', "CRUD: Call $send_to");
+				log_message('debug', "CRUD: set route to '{$send_to}'");
 				// method found, so send to related method
 				$this->generate($send_to);
 			}
 			else {
 				if ( !! method_exists($this->CI, $segment)) {
-					log_message('debug', "CRUD: Call method $segment");
+					log_message('debug', "CRUD: ignore CRUD Class, call method '\$this->{$segment}'");
 		
 					// method not found but Controller contain this method
 					$this->CI->{$segment}();
 				}
 				else {
 					// to prevent blank screen if everything else failed, load the 404
+					log_message('error', "CRUD: both CRUD and method does not exist");
 					show_404();
 				}
 			}
@@ -135,7 +136,7 @@ class CRUD {
 	public function vars($config = array ())
 	{
 		$this->config = array_merge($this->config, $config);
-		log_message('debug', 'CRUD: Set variable');
+		log_message('debug', 'CRUD: set variable');
 	}
 	
 	/**
@@ -338,7 +339,7 @@ class CRUD {
 		$config = $this->_prepare_set($config);
 		
 		$this->_set_id($config['id']);
-		$this->_set_type( !$is_form ? 'get_one' : 'set');
+		$this->_set_type(( ! $is_form ? 'get_one' : 'set'));
 		
 		$data = array (
 			'output' => array (
@@ -516,6 +517,7 @@ class CRUD {
 		// disable access: useful when user doesn't have ACL access
 		if (( ! $config['is_accessible'] && ! $this->config['enabled_remove']) || $this->config['ACL'] < 3)
 		{
+			log_message('debug', "CRUD: access to 'remove' is disabled");
 			return $this->_callback_404();
 		}
 		
@@ -527,6 +529,7 @@ class CRUD {
 			{
 				// get return value from delete method
 				// response should be based from $this->default_response
+				log_message('debug', "CRUD: execute '\$this->{$model}->{$method}");
 				$response = $data['response'] = $this->CI->{$model}->{$method}($config['id'], $response);
 			}
 			else 
@@ -557,11 +560,14 @@ class CRUD {
 		if ($this->is_format_xhr() && !! method_exists($this->CI, $callback_xhr))
 		{
 			// output as an XHR callback
+			log_message('debug', "CRUD: initialize a callback to '{$callback_xhr}'");
 			$this->CI->{$callback_xhr}($data['response']);
 		}
 		elseif ( !! method_exists($this->CI, $callback))
 		{
 			// output to a method in Controller
+			log_message('debug', "CRUD: initialize a callback to '{$callback}'");
+			
 			$this->CI->{$callback}($data['response']);
 		}
 		elseif ( trim($view) !== '')
@@ -586,6 +592,8 @@ class CRUD {
 	 */
 	private function _prepare_get($config)
 	{
+		log_message('debug', "CRUD: initialize method '_prepared_get'");
+		
 		// set default model to 'model', unless specified otherwise
 		$model = 'model';
 		
@@ -620,6 +628,7 @@ class CRUD {
 			$config['offset'] = $this->CI->uri->segment($this->config['segment_id'], 0);
 		}
 		
+		
 		return array_merge($default, $config);
 	}
 	
@@ -632,6 +641,8 @@ class CRUD {
 	 */
 	private function _prepare_set($config)
 	{
+		log_message('debug', "CRUD: initialize method '_prepared_set'");
+		
 		// set default model to 'model', unless specified otherwise
 		$model = 'model';
 		
@@ -678,6 +689,8 @@ class CRUD {
 	 */
 	private function _prepare_remove($config)
 	{
+		log_message('debug', "CRUD: initialize method '_prepared_remove'");
+		
 		$model = 'model';
 		
 		if (trim($this->config['model']) !== '') {
@@ -745,14 +758,18 @@ class CRUD {
 	 */
 	private function _callback_404()
 	{
-		if ( ! isset($this->config['404']) || trim($this->config['404']) === '') {
+		log_message('debug', "CRUD: initialize method '_callback_404'");
+		
+		$view = $this->config['404'];
+		
+		if ( ! isset($view) || trim($view) === '') {
 			show_404();
 		}
 		else {
 			if ( !! property_exists($this->CI, 'ui') && !! $this->config['enable_ui']) {
 				// Using Template for CI: $this->ui
 				$this->CI->ui->set_title('Module not accessible');
-				$this->CI->ui->view($this->config['404']);
+				$this->CI->ui->view($view);
 				
 				if ( !! $this->config['auto_render']) {
 					$this->CI->ui->render();
@@ -760,7 +777,7 @@ class CRUD {
 			}
 			else {
 				// Using CI default template
-				$this->CI->load->view($this->config['404']);
+				$this->CI->load->view($view);
 			}
 		}
 	}
@@ -776,6 +793,8 @@ class CRUD {
 	 */
 	private function _callback_viewer($scaffold = array (), $config = array ())
 	{
+		log_message('debug', "CRUD: initialize method '_callback_viewer'");
+		
 		$data = array_merge($config['output'], $scaffold);
 		list($title, $view, $pre_callback, $post_callback, $enable_ui) = $this->_prepare_viewer($data, $config);
 		$data['title'] = $title;
@@ -787,18 +806,22 @@ class CRUD {
 			}
 			
 			if ( !! method_exists($this->CI, $pre_callback)) {
+				log_message('debug', "CRUD: load pre_callback '{$pre_callback}'");
 				$this->CI->{$pre_callback}($data, $config, $this->_type, $this->_id);
 			}
 			
 			if ($view != FALSE && trim($view) != '') {
+				log_message('debug', "CRUD: load view '{$view}'");
 				$this->CI->ui->view($view, $data);
 			}
 			
 			if ( !! method_exists($this->CI, $post_callback)) {
+				log_message('debug', "CRUD: load post_callback '{$post_callback}'");
 				$this->CI->{$post_callback}($data, $config, $this->_type, $this->_id);
 			}
 				
 			if ( !! $this->config['auto_render']) {
+				log_message('debug', "CRUD: auto render Template Class");
 				$this->CI->ui->render();
 			}
 		}
@@ -806,14 +829,17 @@ class CRUD {
 			// Using CI default template
 			
 			if ( !! method_exists($this->CI, $pre_callback)) {
+				log_message('debug', "CRUD: load pre_callback '{$pre_callback}'");
 				$this->CI->{$pre_callback}($data, $config, $this->_type, $this->_id);
 			}
 			
 			if ($view != FALSE && trim($view) != '') {
+				log_message('debug', "CRUD: load view '{$view}' using CI Loader Class");
 				$this->CI->load->view($view, $data);
 			}
 			
 			if ( !! method_exists($this->CI, $post_callback)) {
+				log_message('debug', "CRUD: load post_callback '{$post_callback}'");
 				$this->CI->{$post_callback}($data, $config, $this->_type, $this->_id);
 			}
 		}
@@ -821,6 +847,8 @@ class CRUD {
 	
 	private function _prepare_viewer($data, $config)
 	{
+		log_message('debug', "CRUD: initialize method '_prepare_viewer'");
+		
 		$title = '';
 		$view = $config['view'];
 		$pre_callback = '';
@@ -839,7 +867,7 @@ class CRUD {
 			$post_callback = $data['post_callback'];
 		}
 		
-		if ($this->_type === 'get_one' && $this->_id > 0) {
+		if ($this->_type === 'get_one'  && ((is_int($this->_id) && $this->_id > 0) || (is_string($this->_id) && trim($this->_id) !== ''))) {
 			if (isset($data['title_read'])) {
 				$title = $data['title_read'];
 			}
@@ -861,7 +889,7 @@ class CRUD {
 			}
 		}
 		
-		if ($this->_type === 'set' && $this->_id >= 0) {
+		if ($this->_type === 'set' && ((is_int($this->_id) && $this->_id >= 0) || is_string($this->_id))) {
 			if (isset($data['title_update'])) {
 				$title = $data['title_update'];
 			}
@@ -887,7 +915,7 @@ class CRUD {
 			}
 		}
 		
-		if ($this->_type === 'set' && $this->_id === 0) {
+		if ($this->_type === 'set' && ((is_int($this->_id) && $this->_id === 0) || (is_string($this->_id) && trim($this->_id) === ''))) {
 			if (isset($data['title_create'])) {
 				$title = $data['title_create'];
 			}
@@ -978,6 +1006,11 @@ class CRUD {
 	private function _set_type($type = 'get')
 	{
 		$this->_type = $type;
+	}
+	
+	public function get_type()
+	{
+		return $this->_type;
 	}
 	
 	private function _set_id($id = 0)
