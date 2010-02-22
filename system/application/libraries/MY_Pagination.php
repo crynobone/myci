@@ -7,7 +7,7 @@ class MY_Pagination extends CI_Pagination
 	var $next_link			= 'Next';
 	var $prev_link			= 'Prev';
 	var $last_link			= 'Last';
-	var $force_start		= FALSE;
+	var $force_first_page	= FALSE;
 	
     function MY_Pagination($params = array ())
     {
@@ -110,7 +110,7 @@ class MY_Pagination extends CI_Pagination
         // Render the "previous" link
         if ($this->cur_page != 1) {
         	$i = $uri_page_number-$this->per_page;
-            if ($i == 0 && ! $this->force_start)
+            if ($i == 0 && ! $this->force_first_page)
 				$i = '';
 			
 			$output .= $this->prev_tag_open.'<a href="'.$this->_anchor($i).'">'.$this->prev_link.'</a>'.$this->prev_tag_close;
@@ -125,7 +125,7 @@ class MY_Pagination extends CI_Pagination
 					$output .= $this->cur_tag_open.$loop.$this->cur_tag_close; // Current page
 				}
 				else {
-					$n = ($i == 0 && ! $this->force_start) ? '' : $i;
+					$n = ($i == 0 && ! $this->force_first_page) ? '' : $i;
 					$output .= $this->num_tag_open.'<a href="'.$this->_anchor($n).'">'.$loop.'</a>'.$this->num_tag_close;
 				}
 			}
