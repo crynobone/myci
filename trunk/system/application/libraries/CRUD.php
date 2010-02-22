@@ -246,6 +246,7 @@ class CRUD {
 				if ($config['enable_table'] === TRUE) {
 					$header = $config['header'];
 					$cols = $config['cols'];
+					$header_anchor = $this->_set_header_anchor($config, $grid['header_anchor']);
 					
 					if ( isset($grid['header']) && is_array($grid['header'])) {
 						$header = $grid['header'];
@@ -258,7 +259,7 @@ class CRUD {
 					// clear table & set table
 					$this->CI->table->clear();
 					$this->CI->table->set_heading($header);
-					$this->CI->table->set_heading_anchor($config, $grid['header_anchor']);
+					$this->CI->table->set_heading_anchor($header_anchor);
 					$this->CI->table->set_cols($cols);
 					
 					// set table data
@@ -271,6 +272,7 @@ class CRUD {
 					'total_rows' => $data['total_rows'],
 					'per_page' => $config['limit'],
 					'cur_page' => $config['offset'],
+					'force_start' => TRUE,
 					'suffix_url' => $this->_set_suffix_url($config)
 				);
 				
@@ -1082,7 +1084,7 @@ class CRUD {
 		return strtoupper((in_array($selected, $options) ? $selected : $options[0]));
 	}
 	
-	private function _toggle_order_by($selected = 'ASC')
+	private function _toggle_sort_by($selected = 'ASC')
 	{
 		$selected = strtoupper(trim($selected));
 		$options = array ('ASC', 'DESC');
@@ -1098,11 +1100,11 @@ class CRUD {
 		foreach ($header as $key => $value) {
 			$uri = '';
 			
-			if ( ! is_int($key) && trim($value) != '') {
-				$uri = $config['base_url'] . '/' . $config['offset'] . '/' . $key;
+			if ( ! is_int($key) && trim($key) != '') {
+				$uri =  $config['offset'] . '/' . $key;
 				
 				if ($config['order_by'] == $key) {
-					$uri .= '/' . $this->_toggle_sort_by(strtolower($config['sort_by']));
+					$uri .= '/' . strtolower($this->_toggle_sort_by($config['sort_by']));
 				}
 				else {
 					$uri .= '/' . strtolower($config['sort_by']);
@@ -1111,7 +1113,7 @@ class CRUD {
 				$uri .= '/' . $config['suffix_url'];
 			}
 			
-			$output[$count] = $this->_cleanup_uri_segment($uri);
+			$output[$count] = $config['base_url'] . '/' . $this->_cleanup_uri_segment($uri);
 			$count++;
 		}
 		
@@ -1132,7 +1134,7 @@ class CRUD {
 		$min = ($this->config['segment_id'] + 1);
 		$max = max($result);
 		for ($i = $min; $i <= $max; $i++) {
-			$data .= '/' . $this->CI->uri->segment($i, '-');
+			$data .= '/' . $this->CI->uri->segment($i, '');
 		}
 		
 		return $data . $config['suffix_url'];
