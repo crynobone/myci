@@ -2,9 +2,11 @@
 
 class MY_Table extends CI_Table
 {
-	var $no_record 	= 'No record';
+	var $no_record 	= 'Tiada Rekod';
 	var $summary 	= array();
 	var $formatter 	= array();
+	var $heading_anchor = array ();
+	var $sort_type = '';
 	
 	function clear()
 	{
@@ -13,24 +15,29 @@ class MY_Table extends CI_Table
 		$this->auto_heading		= TRUE;	
 		$this->summary			= array();
 		$this->cols				= array();
+		$this->heading_anchor	= array();
 	}
 	
 	function generate($table_data = NULL)
 	{
 		// The table data can optionally be passed to this function
 		// either as a database result object or an array
-		if ( ! is_null($table_data)) {
-			if (is_object($table_data)) {
+		if ( ! is_null($table_data))
+		{
+			if (is_object($table_data))
+			{
 				$this->_set_from_object($table_data);
 			}
-			elseif (is_array($table_data)) {
+			elseif (is_array($table_data))
+			{
 				$set_heading = (count($this->heading) == 0 AND $this->auto_heading == FALSE) ? FALSE : TRUE;
 				$this->_set_from_array($table_data, $set_heading);
 			}
 		}
 	
 		// Is there anything to display?  No?  Smite them!
-		if (count($this->heading) == 0 AND count($this->rows) == 0) {
+		if (count($this->heading) == 0 AND count($this->rows) == 0)
+		{
 			return 'Undefined table data';
 		}
 	
@@ -44,30 +51,38 @@ class MY_Table extends CI_Table
 		$out .= $this->newline;		
 
 		// Add any caption here
-		if ($this->caption) {
+		if ($this->caption)
+		{
 			$out .= $this->newline;
 			$out .= '<caption>' . $this->caption . '</caption>';
 			$out .= $this->newline;
 		}
 
 		// Is there a table heading to display?
-		if (count($this->heading) > 0) {
+		if (count($this->heading) > 0)
+		{
 			$out .= $this->template['heading_row_start'];
-			$out .= $this->newline;		
+			$out .= $this->newline;
+			
+			$count_heading = 0;
 
-			foreach($this->heading as $heading_key => $heading_value) {
+			foreach($this->heading as $heading_key => $heading_value)
+			{
 				$heading = $heading_value;
 				$cell_start = trim($this->template['heading_cell_start']);
 				
-				if ( ! is_int($heading_key)) {
+				if ( ! is_int($heading_key))
+				{
 					$cell_open = substr($cell_start, 0, 3);
 					$cell_close = substr($cell_start, 3);
 					
 					$attributes = $heading_value;
 					
-					if (is_array($attributes)) {
+					if (is_array($attributes))
+					{
 						$atts = '';
-						foreach ($attributes as $key => $val) {
+						foreach ($attributes as $key => $val)
+						{
 							$atts .= ' ' . $key . '="' . $val . '"';
 						}
 						
@@ -75,12 +90,23 @@ class MY_Table extends CI_Table
 					}
 					
 					$cell_start = sprintf('%s %s %s', $cell_open, $attributes, $cell_close);
+					
 					$heading = $heading_key;
+				}
+				
+				if ( !! isset($this->heading_anchor[$count_heading]) && trim($this->heading_anchor[$count_heading]) != '') {
+					$heading = sprintf(
+						'<a href="%s">%s</a>', 
+						site_url($this->heading_anchor[$count_heading]), 
+						$heading
+					);
 				}
 				
 				$out .= $cell_start;
 				$out .= $heading;
 				$out .= $this->template['heading_cell_end'];
+				
+				$count_heading++;
 			}
 			
 			$out .= $this->template['heading_row_end'];
@@ -88,10 +114,13 @@ class MY_Table extends CI_Table
 		}
 
 		// Build the table rows
-		if (count($this->rows) > 0) {
+		if (count($this->rows) > 0)
+		{
 			$i = 1;
-			foreach($this->rows as $row) {
-				if ( ! is_array($row)) {
+			foreach($this->rows as $row)
+			{
+				if ( ! is_array($row))
+				{
 					break;
 				}
 			
@@ -101,16 +130,20 @@ class MY_Table extends CI_Table
 				$out .= $this->template['row_'.$name.'start'];
 				$out .= $this->newline;		
 	
-				foreach($row as $key => $cell) {
+				foreach($row as $key => $cell)
+				{
 					$cell_start = trim($this->template['cell_'.$name.'start']);
 					$cell_open = substr($cell_start, 0, 3);
 					$cell_close = substr($cell_start, 3);
 					
-					if (isset($this->cols[$key])) {
+					if (isset($this->cols[$key]))
+					{
 						$attributes = $this->cols[$key];
-						if (is_array($attributes)) {
+						if (is_array($attributes))
+						{
 							$atts = '';
-							foreach ($attributes as $key => $val) {
+							foreach ($attributes as $key => $val)
+							{
 								$atts .= ' ' . $key . '="' . $val . '"';
 							}
 							
@@ -122,10 +155,12 @@ class MY_Table extends CI_Table
 					
 					$out .= $cell_start;
 					
-					if ($cell === "") {
+					if ($cell === "")
+					{
 						$out .= $this->empty_cells;
 					}
-					else {
+					else
+					{
 						$out .= $cell;
 					}
 					
@@ -142,11 +177,13 @@ class MY_Table extends CI_Table
 		}
 		
 		// Is there a table summary to display?
-		if (count($this->summary) > 0) {
+		if (count($this->summary) > 0)
+		{
 			$out .= $this->template['summary_row_start'];
 			$out .= $this->newline;		
 
-			foreach($this->summary as $summary) {
+			foreach($this->summary as $summary)
+			{
 				$out .= $this->template['summary_cell_start'];
 				$out .= $summary;
 				$out .= $this->template['summary_cell_end'];
@@ -171,6 +208,12 @@ class MY_Table extends CI_Table
 	{
 		$args = func_get_args();
 		$this->cols = (is_array($args[0])) ? $args[0] : $args;
+	}
+	
+	function set_heading_anchor()
+	{
+		$args = func_get_args();
+		$this->heading_anchor = (is_array($args[0])) ? $args[0] : $args;
 	}
 
 	
