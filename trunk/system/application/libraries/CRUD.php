@@ -48,6 +48,8 @@ class CRUD {
 		'segment' => 3,
 		'segment_id' => 4,
 		'segment_xhr' => 5,
+		'segment_order' => 5,
+		'segment_sort' => 6,
 		'enable_get' => TRUE,
 		'enable_set' => TRUE,
 		'enable_remove' => TRUE,
@@ -221,16 +223,21 @@ class CRUD {
 					$config['offset'],
 					array (
 						'header' => array(),
+						'header_anchor' => array (),
 						'total_rows' => 0,
 						'data' => array (),
 						'cols' => array (),
 						'records' => FALSE
+					),
+					array (
+						'order_by' => $config['order_by'],
+						'sort_by' => $config['sort_by']
 					)
 				);
 				
 				$grid = $this->_args_to_array(
 					$grid, 
-					array('data', 'total_rows', 'header', 'cols', 'records')
+					array('data', 'total_rows', 'header', 'cols', 'records', 'header_anchor')
 				);
 				
 				$datagrid = $grid['data'];
@@ -251,6 +258,7 @@ class CRUD {
 					// clear table & set table
 					$this->CI->table->clear();
 					$this->CI->table->set_heading($header);
+					$this->CI->table->set_heading_anchor($config, $grid['header_anchor']);
 					$this->CI->table->set_cols($cols);
 					
 					// set table data
@@ -263,7 +271,7 @@ class CRUD {
 					'total_rows' => $data['total_rows'],
 					'per_page' => $config['limit'],
 					'cur_page' => $config['offset'],
-					'suffix_url' => $config['suffix_url']
+					'suffix_url' => $this->_set_suffix_url($config)
 				);
 				
 				// group pagination configuration & template
@@ -607,6 +615,8 @@ class CRUD {
 			'method' => 'get',
 			'callback' => '',
 			'callback_xhr' => '',
+			'order_by' => '',
+			'sort_by' => 'ASC',
 			'limit' => 30,
 			'offset' => 0,
 			'base_url' => current_url(),
@@ -626,6 +636,14 @@ class CRUD {
 		// using 'segment_id' to detect offset for pagination
 		if ( ! isset($config['offset']) && $this->config['segment_id'] > 0) {
 			$config['offset'] = $this->CI->uri->segment($this->config['segment_id'], 0);
+		}
+		
+		if ( ! isset($config['sort_by']) && $this->config['segment_sort'] > 0) {
+			$config['sort_by'] = $this->CI->uri->segment($this->config['segment_sort'], $default['sort_by']);
+		}
+		
+		if ( ! isset($config['order_by']) && $this->config['segment_order'] > 0) {
+			$config['order_by'] = $this->CI->uri->segment($this->config['segment_order'], $default['order_by']);
 		}
 		
 		
@@ -760,7 +778,7 @@ class CRUD {
 	{
 		log_message('debug', "CRUD: initialize method '_callback_404'");
 		
-		$view = $this->config['404'];
+		$view = ( ! empty($this->config['404']) ? $this->config['404'] : '');
 		
 		if ( ! isset($view) || trim($view) === '') {
 			show_404();
@@ -1041,5 +1059,95 @@ class CRUD {
 	public function set_segment_xhr($id = 4)
 	{
 		$this->config['segment_xhr'] = intval($id);
+	}
+	
+	public function get_order_by($header_anchor = array (), $selected = '', $default = '')
+	{
+		$selected = trim($selected);
+		$value = (array_key_exists ($selected, $header_anchor) ? $selected : $default);
+		
+		if ( !! isset($header_anchor[$value])) {
+			return $header_anchor[$value];
+		}
+		else {
+			return FALSE;
+		}
+	}
+	
+	public function get_sort_by($selected = 'ASC')
+	{
+		$selected = strtoupper(trim($selected));
+		$options = array ('ASC', 'DESC');
+		
+		return strtoupper((in_array($selected, $options) ? $selected : $options[0]));
+	}
+	
+	private function _toggle_order_by($selected = 'ASC')
+	{
+		$selected = strtoupper(trim($selected));
+		$options = array ('ASC', 'DESC');
+		
+		return strtoupper(($selected === $options[0] ? $options[1] : $options[0]));
+	}
+	
+	private function _set_header_anchor($config = array (), $header = array())
+	{
+		$output = array ();
+		$count = 0;
+		
+		foreach ($header as $key => $value) {
+			$uri = '';
+			
+			if ( ! is_int($key) && trim($value) != '') {
+				$uri = $config['base_url'] . '/' . $config['offset'] . '/' . $key;
+				
+				if ($config['order_by'] == $key) {
+					$uri .= '/' . $this->_toggle_sort_by(strtolower($config['sort_by']));
+				}
+				else {
+					$uri .= '/' . strtolower($config['sort_by']);
+				}
+				
+				$uri .= '/' . $config['suffix_url'];
+			}
+			
+			$output[$count] = $this->_cleanup_uri_segment($uri);
+			$count++;
+		}
+		
+		return $output;
+	}
+	
+	private function _set_suffix_url($config)
+	{
+		$data = '';
+		$segment = array();
+		array_push($segment, $this->config['segment_xhr']);
+		array_push($segment, $this->config['segment_order']);
+		array_push($segment, $this->config['segment_sort']);
+		
+		$result = array_unique($segment);
+		sort($result);
+		
+		$min = ($this->config['segment_id'] + 1);
+		$max = max($result);
+		for ($i = $min; $i <= $max; $i++) {
+			$data .= '/' . $this->CI->uri->segment($i, '-');
+		}
+		
+		return $data . $config['suffix_url'];
+	}
+	
+	private function _cleanup_uri_segment($uri) {
+		$url = explode('/', $uri);
+		$data = array ();
+		
+		foreach ($url as $value) {
+			if ($value != '') {
+				array_push($data, $value);
+			}
+		}
+		
+		return implode('/', $data);
 	}
 }
