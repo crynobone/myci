@@ -1111,9 +1111,13 @@ class CRUD {
 				}
 				
 				$uri .= '/' . $config['suffix_url'];
+				
+				
+				$uri = $config['base_url'] . '/' . $this->_cleanup_uri_segment($uri);
 			}
 			
-			$output[$count] = $config['base_url'] . '/' . $this->_cleanup_uri_segment($uri);
+			$output[$count] = $uri;
+			
 			$count++;
 		}
 		
