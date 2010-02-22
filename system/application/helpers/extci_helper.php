@@ -21,6 +21,15 @@ if ( ! function_exists('prettylist')) {
 	}
 }
 
+if ( ! function_exists('print_pre')) {
+	function print_pre($data) 
+	{
+		print '<pre>';
+		var_dump($data);
+		print '</pre>';
+	}
+}
+
 if (!function_exists('querystring')) {
 	function querystring($data = array(), $start = '?')
 	{
@@ -122,15 +131,23 @@ if ( ! function_exists('get_valid_domain_name')) {
 if ( ! function_exists('to_proper_date')) {
 	function to_proper_date($date)
 	{
+		if (trim($date) == '') {
+			return '';
+		}
+		
 		return implode('-', array_reverse(explode('-', $date)));
 	}
 }
 
 if ( ! function_exists('to_proper_datetime')) {
-	function to_proper_datetime($datetime)
+	function to_proper_datetime($datetime, $show_time = TRUE)
 	{
+		if (trim($datetime) == '') {
+			return '';
+		}
+		
 		$date = explode(' ', $datetime);
-		return implode('-', array_reverse(explode('-', $date[0]))) . ' ' . $date[1];
+		return implode('-', array_reverse(explode('-', $date[0]))) . (!! $show_time ? ' ' . $date[1] : '');
 	}
 }
 

@@ -97,7 +97,7 @@ class MY_Table extends CI_Table
 				if ( !! isset($this->heading_anchor[$count_heading]) && trim($this->heading_anchor[$count_heading]) != '') {
 					$heading = sprintf(
 						'<a href="%s">%s</a>', 
-						site_url($this->heading_anchor[$count_heading]), 
+						$this->heading_anchor[$count_heading], 
 						$heading
 					);
 				}
