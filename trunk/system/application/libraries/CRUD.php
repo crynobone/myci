@@ -21,6 +21,8 @@ class CRUD {
 	private $_type = 'get';
 	private $_format = 'http';
 	private $_ACL = 3;
+	private $_sort_by = '';
+	private $_order_by = '';
 	
 	// set default modify/delete response
 	private $_default_response = array (
@@ -272,7 +274,7 @@ class CRUD {
 					'total_rows' => $data['total_rows'],
 					'per_page' => $config['limit'],
 					'cur_page' => $config['offset'],
-					'force_start' => TRUE,
+					'show_page_zero' => TRUE,
 					'suffix_url' => $this->_set_suffix_url($config)
 				);
 				
@@ -356,8 +358,11 @@ class CRUD {
 				'form' => '',
 				'form_open' => '',
 				'form_close' => '',
+				'form_box' => '',
+				'button_box' => '',
 				'datagrid' => '',
 				'fields' => array (),
+				'form_hidden' => '',
 				'error' => '',
 				'value' => array ()
 			), 
@@ -384,12 +389,12 @@ class CRUD {
 		}
 		
 		// stop processing if method access to off
-		if (( ! $config['is_accessible'] || ! $this->config['enable_set']) || ($this->config['ACL'] < 2 && $this->_set_type === 'set')) {
+		if (( ! $config['is_accessible'] || ! $this->config['enable_set']) || ($this->config['ACL'] < 2 && $this->_type === 'set')) {
 			// shouldn't be able to modify
 			log_message('debug', 'CRUD: Access to add/edit is disabled');
 			return $this->_callback_404();
 			
-		} elseif (( ! $config['is_accessible'] || ! $this->config['enable_get']) || ($this->config['ACL'] < 1 && $this->_set_type === 'get_one')) {
+		} elseif (( ! $config['is_accessible'] || ! $this->config['enable_get']) || ($this->config['ACL'] < 1 && $this->_type === 'get_one')) {
 			// shouldn't be able to view single data
 			log_message('debug', 'CRUD: Access to view is disabled');
 			return $this->_callback_404();
@@ -420,6 +425,10 @@ class CRUD {
 					$data['output']['datagrid'] = $data['output']['form_open'];
 					$data['output']['datagrid'] .= $data['output']['form'];
 					$data['output']['datagrid'] .= $data['output']['form_close'];
+					$data['output']['form_box'] = $this->CI->form->form_box[$config['prefix']];
+					$data['output']['button_box'] = $this->CI->form->button_box[$config['prefix']];
+					$data['output']['form_hidden'] = $this->CI->form->form_hidden[$config['prefix']];
+					
 				}
 				else {
 					$data['output']['datagrid'] = $data['output']['form'];
@@ -642,14 +651,20 @@ class CRUD {
 		
 		if ( ! isset($config['sort_by']) && $this->config['segment_sort'] > 0) {
 			$config['sort_by'] = $this->CI->uri->segment($this->config['segment_sort'], $default['sort_by']);
+			$this->_sort_by = $config['sort_by'];
 		}
 		
 		if ( ! isset($config['order_by']) && $this->config['segment_order'] > 0) {
 			$config['order_by'] = $this->CI->uri->segment($this->config['segment_order'], $default['order_by']);
+			
 		}
 		
+		$result = array_merge($default, $config);
 		
-		return array_merge($default, $config);
+		$this->_order_by = $result['order_by'];
+		$this->_sort_by = $result['sort_by'];
+		
+		return $result;
 	}
 	
 	/**
@@ -935,7 +950,7 @@ class CRUD {
 			}
 		}
 		
-		if ($this->_type === 'set' && ((is_int($this->_id) && $this->_id === 0) || (is_string($this->_id) && trim($this->_id) === ''))) {
+		if ($this->_type === 'set' && ((is_int($this->_id) && $this->_id === 0) || (is_string($this->_id) &&  (trim($this->_id) === '' || intval($this->_id) === 0)))) {
 			if (isset($data['title_create'])) {
 				$title = $data['title_create'];
 			}
@@ -1010,7 +1025,7 @@ class CRUD {
 	
 	public function set_format()
 	{
-		return ($this->get_format() == 'xhr' ? 'xhr' : 'http');
+		return ($this->_get_format() == 'xhr' ? 'xhr' : 'http');
 	}
 	
 	public function is_format_http()
@@ -1048,24 +1063,44 @@ class CRUD {
 		return $this->CI->uri->segment($this->config['segment_xhr'], '');
 	}
 	
-	public function set_segment($id = 2)
+	public function set_segment($id = 2, $type = 'id')
 	{
-		$this->config['segment'] = intval($id);
+		$type = strtolower(trim($type));
+		$allowed = array ('id', 'xhr', 'order', 'sort');
+		
+		if ( !! in_array ($type, $allowed)) {
+			$value = "_{$type}";
+			
+			if ($type === 'id') {
+				$value = "";	
+			}
+			
+			return $this->config["segment{$value}"] = $id;
+		}
+		
+		return FALSE;
 	}
 	
-	public function set_segment_id($id = 3)
+	public function get_segment($type = 'id')
 	{
-		$this->config['segment_id'] = intval($id);
+		$allowed = array ('id', 'xhr', 'order', 'sort');
+		
+		if ( !! in_array ($type, $allowed)) {
+			$value = "_{$type}";
+			
+			if ($type === 'id') {
+				$value = "";	
+			}
+			
+			return $this->config["segment{$value}"] ;
+		}
+		
+		return FALSE;
 	}
 	
-	public function set_segment_xhr($id = 4)
+	public function get_order_by($header_anchor = array (), $default = '')
 	{
-		$this->config['segment_xhr'] = intval($id);
-	}
-	
-	public function get_order_by($header_anchor = array (), $selected = '', $default = '')
-	{
-		$selected = trim($selected);
+		$selected = trim($this->_order_by);
 		$value = (array_key_exists ($selected, $header_anchor) ? $selected : $default);
 		
 		if ( !! isset($header_anchor[$value])) {
@@ -1076,17 +1111,24 @@ class CRUD {
 		}
 	}
 	
-	public function get_sort_by($selected = 'ASC')
+	public function get_sort_by()
+	{
+		return $this->_sort_by;
+	}
+	
+	public function set_sort_by($selected = 'ASC')
 	{
 		$selected = strtoupper(trim($selected));
 		$options = array ('ASC', 'DESC');
 		
-		return strtoupper((in_array($selected, $options) ? $selected : $options[0]));
+		$this->_sort_by = strtoupper((in_array($selected, $options) ? $selected : $options[0]));
+		
+		return $this->_sort_by;
 	}
 	
-	private function _toggle_sort_by($selected = 'ASC')
+	public function toggle_sort_by()
 	{
-		$selected = strtoupper(trim($selected));
+		$selected = strtoupper(trim($this->_sort_by));
 		$options = array ('ASC', 'DESC');
 		
 		return strtoupper(($selected === $options[0] ? $options[1] : $options[0]));
@@ -1103,11 +1145,11 @@ class CRUD {
 			if ( ! is_int($key) && trim($key) != '') {
 				$uri =  $config['offset'] . '/' . $key;
 				
-				if ($config['order_by'] == $key) {
-					$uri .= '/' . strtolower($this->_toggle_sort_by($config['sort_by']));
+				if ($this->_order_by == $key) {
+					$uri .= '/' . strtolower($this->toggle_sort_by($this->_sort_by));
 				}
 				else {
-					$uri .= '/' . strtolower($config['sort_by']);
+					$uri .= '/' . strtolower($this->_sort_by);
 				}
 				
 				$uri .= '/' . $config['suffix_url'];

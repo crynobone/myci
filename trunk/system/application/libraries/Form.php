@@ -22,6 +22,7 @@ class Form {
 	
 	// form data
 	public $fields = array ();
+	public $form_hidden = array ();
 	public $value = array ();
 	public $data = array ();
 	public $full_data = array ();
@@ -30,6 +31,8 @@ class Form {
 	public $validate = TRUE;
 	public $result = array ();
 	public $success = TRUE;
+	public $form_box = array (),
+		$button_box = array ();
 	
 	// default template
 	public $template = array (
@@ -170,6 +173,7 @@ class Form {
 		
 		$run = FALSE;
 		$form_submit = 'Hantar';
+		$form_reset = 'Reset';
 		$form_buttons = array ();
 		
 		$validate = $this->validate;
@@ -188,11 +192,13 @@ class Form {
 		}
 		
 		$hidden_html = '';
-		$final_html = sprintf(
+		$final_html = $form_open = sprintf(
 			'<%s class="%s">', 
 			$template['fieldset'], 
 			$template['fieldset_class']
 		);
+		
+		$form_close = sprintf('</%s>', $template['fieldset']);
 		
 		$got_rule = FALSE;
 		
@@ -274,7 +280,7 @@ class Form {
 					(in_array($template['label'], array('td', 'th'), FALSE) ? 'colspan="2"' : '')
 				);
 			}
-			elseif ( ! in_array($type, array('hidden', 'form_submit'))) {
+			elseif ( ! in_array($type, array('hidden', 'form_submit', 'form_button'))) {
 				if ( !! $show_field) {
 					$html .= sprintf(
 						'<%s id="tr_%s" class="%s %s">', 
@@ -445,6 +451,20 @@ class Form {
 					case 'form_submit' :
 						$form_submit = $field['name'];
 						break;
+					case 'form_reset' :
+						$form_reset = $field['name'];
+						break;
+					case 'form_button' :
+						$_extra = array (
+							'name' => $name,
+							'id' => $name,
+							'value' => 'true',
+							'content' => $field['name'],
+							'class' => 'form_button ' . trim($field['class']) 
+						);
+												
+						array_push ($form_buttons, form_button($_extra));
+						break;
 					case 'display' :
 						//do nothing;
 						break;
@@ -459,7 +479,7 @@ class Form {
 						break;
 				}
 			
-				if ( ! in_array($type, array('hidden', 'heading', 'form_submit'))) {
+				if ( ! in_array($type, array('hidden', 'heading', 'form_submit', 'form_button', 'form_reset'))) {
 					if ($type !== 'custom' && trim($field['html']) !== '') {
 						$html .= $field['html'];
 					}
@@ -475,7 +495,7 @@ class Form {
 				}
 			}
 			
-			if ( ! in_array($type, array('hidden', 'form_submit'))) {
+			if (! in_array($type, array('hidden', 'form_submit', 'form_button', 'form_reset'))) {
 				if ( !! $show_field) {
 					$html .= sprintf(
 						'</%s></%s>', 
@@ -485,38 +505,47 @@ class Form {
 				}
 			}
 			
-			if ( ! in_array($type, array('hidden', 'readonly'))) {
+			if ( ! in_array($type, array('hidden'))) {
 				if ($type !== 'heading') {
+					if ($type === 'readonly') {
+						$hidden_html .= $hidden;
+					}
 					$this->output[$id][$field['id']] = $html;
 				}
+				
 				$final_html .= $html;
 			}
 			else {
 				$this->output[$id][$field['id']] = $hidden;
 				$hidden_html .= $hidden;
-				
-				if ($type === 'readonly') {
-					$final_html .= $html;
-				}
 			}
 			
 			$this->value[$id][$field['id']] = $value;
 		}
 		
+		$this->form_hidden[$id] = $hidden_html;
+		
+		$this->form_box[$id] = $hidden_html . $final_html . $form_close;
+		
 		// add a submit button for form
 		if ( !! $is_form) {
-			$final_html .= sprintf(
-				'<%s class="%s" %s>',
+			$form_button = sprintf(
+				'<%s><%s class="%s" %s>',
+				$template['group'],
 				$template['label'],
 				$template['button_class'],
 				(in_array($template['label'], array('td', 'th'), FALSE) ? 'colspan="2"' : '')
 			);
-			$final_html .= form_submit($pre . '_form_submit', $form_submit, 'class="form_submit"');
-			$final_html .= sprintf('</%s></%s>', $template['label'], $template['group']);
+			$form_button .= form_submit($pre . '_form_submit', $form_submit, 'class="form_submit"');
+			$form_button .= form_reset($pre . '_form_reset', $form_reset, 'class="form_reset"');
+			$form_button .= ' ' . implode(' ', $form_buttons);
+			$form_button .= sprintf('</%s></%s>', $template['label'], $template['group']);
 			
+			$this->button_box[$id] = $form_open . $form_button . $form_close;
+			$final_html .= $form_button;
 		}
 		
-		$final_html .= sprintf('</%s>', $template['fieldset']);
+		$final_html .= $form_close;
 		
 		if ($run == FALSE) {
 			$this->success = FALSE;
